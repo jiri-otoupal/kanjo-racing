@@ -1,38 +1,67 @@
 .App {
-  text-align: center;
+    text-align: center;
 }
 
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+    height: 40vmin;
+    pointer-events: none;
+}
+
+.title {
+    font-family: "Hakio";
+    font-size: 100px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.dock-up {
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.loginBox {
+    display: flex;
+    justify-content: center;
+    width: 350px;
+    height: 350px;
+    border-radius: 10px;
+    background: rgb(255,255,255);
+    background: radial-gradient(ellipse, rgba(200,0,0,1) 25%, rgba(200,0,0,0) 73%);
+    z-index: 9;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+    background-size: cover;
+    background-position: center;
+    background-blend-mode: darken;
+    background-repeat: no-repeat;
+    background-image: url("./resources/gifs/drift-cars.gif");
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
 }
 
 .App-link {
-  color: #61dafb;
+    color: #61dafb;
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

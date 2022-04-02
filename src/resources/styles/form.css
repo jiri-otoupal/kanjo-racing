@@ -1,0 +1,63 @@
+.form__group {
+    width: 65%;
+    display: flex;
+    align-self: center;
+    flex-direction: column-reverse;
+    align-content: center;
+    justify-content: center;
+}
+
+.form__field {
+
+    font-family: inherit;
+    border: 0;
+    border-bottom: 2px solid #f8f8f85d;
+    outline: 0;
+    font-size: 1.3rem;
+    color: #fff;
+    background: transparent;
+    transition: border-color 0.2s;
+}
+
+.form__field::placeholder {
+    color: transparent;
+}
+
+.form__field:placeholder-shown ~ .form__label {
+    font-size: 1.3rem;
+    cursor: text;
+}
+
+.form__label {
+    font-family: "Hakio";
+    padding-top: 10px;
+    transition: 0.2s;
+    font-size: 1rem;
+    color: #f7f7f7;
+    margin-bottom: -24px;
+}
+
+.form__field:focus {
+    font-weight: 700;
+    border-width: 3px;
+    border-image: linear-gradient(to right, #f8f8f8, #000000);
+    border-image-slice: 1;
+}
+
+.form__field:focus ~ .form__label {
+    transition: 0.2s;
+    font-size: 1rem;
+    color: #000000;
+    font-weight: 700;
+}
+
+/* reset input */
+.form__field:required, .form__field:invalid {
+    box-shadow: none;
+}
+
+.form__button{
+    margin-top: 16px;
+    font-family: Hakio;
+}
+
