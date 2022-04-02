@@ -1,23 +1,21 @@
 import './App.css';
+import {BrowserRouter, Route, Switch} from "react-router-dom";
+import React from "react";
 
+import Register from './pages/Register';
+import Signup from './pages/Signup';
 
 function App() {
     return (
         <div className="App">
-            <header className="App-header">
-                <h1 className={"title dock-up"}>Kanjo Racing</h1>
-                <div className="loginBox">
-                    <div className="form__group field">
-                        <button type="button" className="form__button">Log In</button>
-                        <input type="password" className="form__field" placeholder="Password" name="password" id='password' required/>
-                        <label htmlFor="password" className="form__label">Password</label>
-                        <input type="input" className="form__field" placeholder="Name" name="name" id='name' required/>
-                        <label htmlFor="name" className="form__label">Name</label>
-                    </div>
-                </div>
-            </header>
-
+            <BrowserRouter>
+                <Switch> {/* The Switch decides which component to show based on the current URL.*/}
+                    <Route exact path='/' component={Signup}/>
+                    <Route exact path='/register' component={Register}/>
+                </Switch>
+            </BrowserRouter>
         </div>
+
     );
 
 }
