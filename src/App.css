@@ -37,12 +37,20 @@
     }
 }
 
+.App-bg{
+    background-image: url("./resources/gifs/drift-cars.gif");
+}
+
+.App-bg2{
+    background-image: url("./resources/gifs/drift-cars2.gif");
+}
+
+
 .App-header {
     background-size: cover;
     background-position: center;
     background-blend-mode: darken;
     background-repeat: no-repeat;
-    background-image: url("./resources/gifs/drift-cars.gif");
     background-color: #282c34;
     min-height: 100vh;
     display: flex;

@@ -1,6 +1,6 @@
 
 const Signup = () => {
-    return (<header className="App-header">
+    return (<header className="App-header App-bg">
         <h1 className={"title dock-up"}>Kanjo Racing</h1>
         <div className="loginBox">
             <div className="form__group field">
