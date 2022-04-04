@@ -7,9 +7,25 @@
     pointer-events: none;
 }
 
+.hakio-font{
+    font-family: "Hakio";
+}
+
+.register-href{
+    font-size: 18px;
+    margin-top: 10px;
+    color: #f5f5f5dd;
+}
+
+.sign-href{
+    margin-top: -10%;
+    font-size: 18px;
+    color: #f5f5f5ff;
+}
+
 .title {
     font-family: "Hakio";
-    font-size: 100px;
+    font-size: 10vh;
     font-weight: bold;
     text-align: center;
 }
@@ -23,11 +39,11 @@
 .loginBox {
     display: flex;
     justify-content: center;
-    width: 350px;
-    height: 350px;
+    width: 500px;
+    height: 500px;
     border-radius: 10px;
     background: rgb(255,255,255);
-    background: radial-gradient(ellipse, rgba(200,0,0,1) 25%, rgba(200,0,0,0) 73%);
+    background: radial-gradient(ellipse, rgba(150,24,28,1) 50%, rgba(200,0,0,0) 72%);
     z-index: 9;
 }
 

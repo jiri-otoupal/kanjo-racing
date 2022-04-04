@@ -1,0 +1,20 @@
+
+.mapboxgl-ctrl{
+    visibility: hidden;
+}
+
+.map-nav-bar{
+    background-color: rgba(160, 0, 0, 0.68) !important;
+    width: 100vw;
+    position: absolute;
+    bottom: 0;
+}
+
+.css-1ee5err-MuiButtonBase-root-MuiBottomNavigationAction-root.Mui-selected{
+    color: #f8f8f8 !important;
+}
+
+#report-pos{
+    position: absolute;
+    right: 0;
+}

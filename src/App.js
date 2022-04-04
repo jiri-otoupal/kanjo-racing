@@ -1,19 +1,22 @@
 import './App.css';
-import {BrowserRouter, Route, Switch} from "react-router-dom";
+import {HashRouter, Route, Switch, useHistory} from "react-router-dom";
 import React from "react";
 
 import Register from './pages/Register';
-import Signup from './pages/Signup';
+import Sign_in from './pages/Sign_in';
+import Main from "./pages/Main";
 
 function App() {
+    useHistory();
     return (
         <div className="App">
-            <BrowserRouter>
-                <Switch> {/* The Switch decides which component to show based on the current URL.*/}
-                    <Route exact path='/' component={Signup}/>
+            <HashRouter>
+                <Switch> {}
+                    <Route exact path='/' component={Sign_in}/>
                     <Route exact path='/register' component={Register}/>
+                    <Route exact path='/main' component={Main}/>
                 </Switch>
-            </BrowserRouter>
+            </HashRouter>
         </div>
 
     );
