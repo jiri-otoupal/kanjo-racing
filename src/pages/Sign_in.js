@@ -1,11 +1,9 @@
 import {Link, useHistory} from "react-router-dom";
 import {Alert, TextField, ThemeProvider} from "@mui/material";
 import darkTheme from "../themes/DarkTheme";
-import {handleSubmit} from "../utils";
+import {handleSubmit, setCookie} from "../utils";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {useState} from "react";
-import Register from "./Register";
-
 
 
 const Sign_in = () => {
@@ -50,6 +48,7 @@ const Sign_in = () => {
     function callback(obj) {
         console.log(obj);
         if (obj["status"] === "OK") {
+            setCookie("session_id",obj["cookie"],30);
             setAlert(null);
             history.push("/main");
         } else {

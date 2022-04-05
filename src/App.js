@@ -8,6 +8,7 @@ import Main from "./pages/Main";
 
 function App() {
     useHistory();
+
     return (
         <div className="App">
             <HashRouter>
