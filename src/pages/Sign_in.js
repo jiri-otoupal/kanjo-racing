@@ -7,9 +7,17 @@ import {useState} from "react";
 
 
 const Sign_in = () => {
-    let history = useHistory();
+    const [ alerted,setAlerted] = useState(false);
+    const [alert, setAlert] = useState(false);
 
     const [loadingState, setLoading] = useState(false);
+
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+
+    let history = useHistory();
+
 
     const login_form = <form
         action="http://localhost:80/backend/login.php"
@@ -19,7 +27,7 @@ const Sign_in = () => {
         }}>
         <div className="loginBox">
             <div className="form__group field">
-                <Link to={"./Register"} className={"register-href form__label"} >Register</Link>
+                <Link to={"./Register"} className={"register-href form__label"}>Register</Link>
                 <ThemeProvider theme={darkTheme}>
                     <LoadingButton type={"submit"} loading={loadingState} color={"anger"} variant="contained"
                                    className={"form__group"}>Sign
@@ -37,18 +45,22 @@ const Sign_in = () => {
         </div>
     </form>;
 
+    const [form_state, setFormState] = useState(login_form);
+
 
     const register_alert = (message) => {
         return (<Alert severity="error">{message}</Alert>)
     };
 
-    const [alert, setAlert] = useState(false);
-    const [form_state, setFormState] = useState(login_form);
+    if (urlParams.has("unauthorized") && !alerted) {
+        setAlert(register_alert("Please login first"))
+        setAlerted(true);
+        window.history.pushState("", "", '/');
+    }
 
     function callback(obj) {
-        console.log(obj);
         if (obj["status"] === "OK") {
-            setCookie("session_id",obj["cookie"],30);
+            setCookie("session_id", obj["cookie"], 30);
             setAlert(null);
             history.push("/main");
         } else {

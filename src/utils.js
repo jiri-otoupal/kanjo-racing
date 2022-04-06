@@ -33,10 +33,11 @@ export const getCookie = (cname) => {
     return "";
 }
 
-export const callApiGet = (url, callback) => {
+export const callApi = (url, callback) => {
     $.ajax({
-        type: "GET",
-        url: url + "?session_id=" + getCookie("session_id"),
+        type: "POST",
+        url: url,
+        data: {session_id: getCookie("session_id")},
         success(data) {
             callback(data);
         },

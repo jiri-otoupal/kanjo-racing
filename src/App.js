@@ -10,7 +10,7 @@ function App() {
     useHistory();
 
     return (
-        <div className="App">
+        <div className="App" style={{overflowX: "hidden"}}>
             <HashRouter>
                 <Switch> {}
                     <Route exact path='/' component={Sign_in}/>

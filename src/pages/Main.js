@@ -1,20 +1,33 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Map, {Layer, Source} from 'react-map-gl';
+import {styled} from '@mui/material/styles';
 import {
     Avatar,
     BottomNavigation,
-    BottomNavigationAction,
+    BottomNavigationAction, Button,
     Container, Fab, FormControlLabel, FormGroup, Grid,
     IconButton,
     Paper,
     Slide, Stack, Switch, Table, TextField, ThemeProvider, Typography
 } from "@mui/material";
-import {Map as MapIcon, Person as ProfileIcon, Flag as Race, Report, Add, Garage} from "@mui/icons-material";
+import {
+    Map as MapIcon,
+    Person as ProfileIcon,
+    Flag as Race,
+    Report,
+    Add,
+    Garage,
+    PhotoCamera
+} from "@mui/icons-material";
 import darkTheme from "../themes/DarkTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {callApiGet, handleSubmit} from "../utils";
-import {useHistory} from "react-router-dom";
+import {callApi, handleSubmit} from "../utils";
+import {DataGrid} from '@mui/x-data-grid';
 import $ from 'jquery';
+import {GridColDef} from "@mui/x-data-grid";
+import {GridRowsProp} from "@mui/x-data-grid";
+import SampleCar from "./../resources/images/sample_car.png";
+
 
 const access_token = "pk.eyJ1Ijoib3Bha2EiLCJhIjoiY2wxa3d6cmtyMDBpZzNjcWppMGM2djNxbCJ9.5Qka2qUoZBTZ5vkJpFwlKQ";
 
@@ -35,6 +48,10 @@ const layerStyle = {
     }
 };
 
+const Input = styled('input')({
+    display: 'none',
+});
+
 const fabStyle = {
     position: 'fixed',
     bottom: 75,
@@ -42,35 +59,17 @@ const fabStyle = {
 };
 
 
-const races_menu = (
-    <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
 
-        <Fab color="#333333" style={fabStyle} aria-label="add">
-            <Add/>
-        </Fab>
-    </Container>
-);
 
-function generateCarRow() {
-    return (<Stack color={"textwhitish"} spacing={1}>
-        <Grid container spacing={1}>
-            <Grid item>
-                <Typography color={"textwhitish"}>
-                    Car: Name
-                    HP: 10
-                </Typography>
-            </Grid>
-            <Grid item>
-                <FormGroup>
-                    <FormControlLabel color={"textwhitish"} control={<Switch defaultChecked/>} label="In Use"/>
-                </FormGroup>
-            </Grid>
-        </Grid>
-    </Stack>);
-}
 
 const Main = () => {
-    const [cars, setCars] = useState("No Cars");
+    const [loadedProfile, setLoadedProfile] = useState(false);
+    const [loadedCars, setLoadedCars] = useState(false);
+    const [loadedRaces, setLoadedRaces] = useState(false);
+    const [loadedUserRaces, setUserLoadedRaces] = useState(false);
+
+    const [blockAddCar, setBlockAddWithoutFill] = useState(false);
+    const [carsExist, setCarsExist] = useState(false);
     const [loadingState, setLoading] = useState(false);
     const [boxContent, setBoxContent] = React.useState("map");
     const [nicknameVal, setNicknameVal] = React.useState("");
@@ -78,16 +77,171 @@ const Main = () => {
     const [bottomNavVal, setNavVal] = React.useState(0);
     const [checked, setChecked] = React.useState(false);
     const containerRef = React.useRef(null);
+    const [cars, setCars] = useState(null);
 
+    let tmp_cars = useRef([]);
+
+
+    function handleSaveCar() {
+        setBlockAddWithoutFill();
+    }
+
+    function generateCarRow(car) {
+        let vehicle_img = "url(" + SampleCar + ")";
+
+        if (car["img_url"] != null)
+            vehicle_img = "url(" + car['img_url'] + ")";
+
+
+        const rows = [
+            {id: 1, name: 'Nickname', value: car["name"]},
+            {id: 2, name: 'Vehicle Type', value: car["vehicle_type"]},
+            {id: 3, name: 'Brand', value: car["brand"]},
+            {id: 4, name: 'HP', value: car["hp"]},
+        ];
+
+        const columns = [
+            {
+                field: "name",
+                headerName: "Name",
+                sortable: false,
+                disableColumnMenu: true,
+                disableReorder: true,
+                selectable: false,
+                flex: true
+            }, {
+                field: "value",
+                headerName: "Value",
+                sortable: false,
+                disableColumnMenu: true,
+                disableReorder: true,
+                editable: true,
+                flex: true
+            }
+        ];
+
+
+        return (
+            <Container maxWidth={"sm"} style={{
+                marginBottom: "6px",
+                backgroundColor: "#222222",
+                borderRadius: "10px",
+                backgroundImage: vehicle_img,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundBlendMode: "darken",
+                backgroundRepeat: "no-repeat",
+                display: "flex",
+                alignContent: "center",
+                flexDirection: "column"
+
+            }}>
+
+                <DataGrid
+                    id
+                    rows={rows}
+                    columns={columns}
+                    density="compact"
+                    pageSize={8}
+                    autoHeight
+                    rowsPerPageOptions={[5]}
+                    headerHeight={0}
+                    hideFooter
+                    style={{border: 0, width: "100%"}}
+                />
+                <div style={{display: "inline-flex", justifyContent: "space-between", alignItems: "center"}}>
+                    <label htmlFor="photo-upload" style={{alignSelf: "center"}}>
+                        <Input accept="image/*" id="photo-upload" type="file"/>
+                        <Button variant="contained" component="span">
+                            Upload Photo
+                        </Button>
+                    </label>
+                    <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
+                        <Input accept="image/*" id="photo-camera" type="file"/>
+                        <IconButton color="primary" aria-label="upload picture" component="span">
+                            <PhotoCamera/>
+                        </IconButton>
+                    </label>
+                    <LoadingButton type={"button"} onClick={handleSaveCar} color={"anger"} style={{alignSelf: "center"}}
+                                   variant="contained">Save</LoadingButton>
+                </div>
+            </Container>
+        );
+    }
 
     function handleProfileUpdate(data) {
-        if (data["status"] === "FAIL")
+        if (data["status"] === "FAIL") {
+            window.location = "/?unauthorized=1";
             return;
+        }
 
         setNicknameVal(data["nickname"]);
         setKarmaVal(data["karma"]);
+        setLoadedProfile(true);
     }
 
+    function handleCarsUpdate(data) {
+        if (data["status"] === "FAIL") {
+            window.location = "/?unauthorized=1";
+            return;
+        }
+
+        setLoadedCars(true);
+
+        let tmp = [];
+
+        if (data["cars"].length === 0) {
+            setCarsExist(false);
+            return;
+        }
+
+
+        for (let i = 0; i < data["cars"].length; i++)
+            tmp.push(generateCarRow(data["cars"][i]));
+
+        tmp_cars.current = tmp;
+        setCars(tmp_cars.current);
+        setCarsExist(true);
+    }
+
+    function handleRacesUpdate(data) {
+        if (data["status"] === "FAIL") {
+            window.location = "/?unauthorized=1";
+            return;
+        }
+        //TODO
+        setLoadedRaces(true);
+    }
+
+    function handleUserRacesUpdate(data) {
+        if (data["status"] === "FAIL") {
+            window.location = "/?unauthorized=1";
+            return;
+        }
+        //TODO
+        setUserLoadedRaces(true);
+    }
+
+    if (!loadedProfile)
+        callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
+
+    if (!loadedCars)
+        callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
+
+    if (!loadedRaces)
+        callApi("http://localhost:80/backend/races.php", handleRacesUpdate);
+
+    if (!loadedUserRaces)
+        callApi("http://localhost:80/backend/user_race.php", handleUserRacesUpdate);
+
+    const races_menu = (
+        <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
+
+            <Fab color="#333333" style={fabStyle} aria-label="add">
+                <Add/>
+            </Fab>
+        </Container>
+    );
 
     const profile_menu = (
         <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
@@ -115,14 +269,34 @@ const Main = () => {
     );
 
 
-    const cars_menu = (
+    function createNewCar() {
+        if (blockAddCar)
+            return;
+        tmp_cars.current.push(generateCarRow({
+            name: "Enter Name",
+            brand: "Enter Brand",
+            vehicle_type: "Enter Type(Example Corrola GR)",
+            hp: "0"
+        }));
+
+        setBlockAddWithoutFill(true,);
+        setCarsExist(true);
+        setCars(tmp_cars.current);
+    }
+
+    let cars_menu = (
         <div>
-            <Typography variant={"h4"} color={"textwhitish"}>{cars}</Typography>
-            <Fab color={"textwhitish"} style={fabStyle} aria-label="add">
+            <Typography variant={"h4"} color={"textwhitish"}>{!carsExist ? "No Cars" : ""}</Typography>
+            <Fab color={"textwhitish"} style={fabStyle} aria-label="add" onClick={createNewCar}>
                 <Add/>
             </Fab>
+            <Stack style={{width: "100vw", display: "flex", alignContent: "center", justifyContent: "center"}}
+                   color={"textwhitish"}>
+                {cars}
+            </Stack>
         </div>
     );
+
 
     return (
         <ThemeProvider theme={darkTheme}>
@@ -143,6 +317,9 @@ const Main = () => {
 
                     <Slide direction="up" in={checked} container={containerRef.current}>
                         <Paper sx={{
+                            overflowX: "hidden",
+                            maxHeight: "90vh",
+                            overflowY: 'auto',
                             position: "absolute",
                             width: "100vw",
                             height: "100vh",
@@ -153,7 +330,7 @@ const Main = () => {
                             justifyItems: "center",
                             justifyContent: "center"
                         }} elevation={14}>
-                            {boxContent === "profile" ? profile_menu : "cars" ? cars_menu : races_menu}
+                            {boxContent === "profile" ? profile_menu : boxContent==="cars" ? cars_menu  : races_menu}
                         </Paper>
                     </Slide>
 
@@ -184,12 +361,18 @@ const Main = () => {
                                 setChecked(false);
 
                             if (newValue === 1) {
-                                callApiGet("http://localhost:80/backend/profile.php", handleProfileUpdate);
+                                callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
                                 setBoxContent("profile");
-                            } else if (newValue === 2)
+                                setBlockAddWithoutFill(false);
+                            } else if (newValue === 2) {
+                                callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
                                 setBoxContent("cars");
-                            else if (newValue === 3)
+                            } else if (newValue === 3) {
+                                callApi("http://localhost:80/backend/races.php", handleRacesUpdate);
+                                callApi("http://localhost:80/backend/user_race.php", handleUserRacesUpdate);
                                 setBoxContent("races");
+                                setBlockAddWithoutFill(false);
+                            }
                         }}
                     >
                         <BottomNavigationAction label="Map" icon={<MapIcon/>}/>
