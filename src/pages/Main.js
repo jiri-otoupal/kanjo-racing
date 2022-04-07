@@ -79,11 +79,51 @@ const Main = () => {
 
     let tmp_cars = useRef([]);
 
-
     function handleSaveCar(e, callback) {
         setBlockAddWithoutFill(false);
         handleSubmit(e, callback);
     }
+
+    let track = {
+        // (B) PROPERTIES & SETTINGS
+        updated: true,
+        watchOptions: {
+            timeout: 3000,
+            maxAge: 0,
+            enableHighAccuracy: true
+        },
+
+        watchId: null, // Interval timer.
+        // (C) INIT
+        init: () => {
+            // (C2) CHECK GPS SUPPORT + START TRACKING
+            if (navigator.geolocation)
+                track.watchId = navigator.geolocation.watchPosition(track.update, track.handleError, track.watchOptions);
+
+        },
+
+        callback: () => {
+
+        },
+
+        // (D) UPDATE CURRENT LOCATION TO SERVER
+        update: (pos) => {
+
+                callApi("http://localhost:80/backend/tracking.php", track.callback, {
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude
+                });
+
+        },
+
+        handleError: (error) => {
+            console.log(error);
+        }
+    };
+
+
+    //track.init(); // Enables Tracking to DB
+
 
     function deleteCar(car_id) {
         callApi("http://localhost:80/backend/car.php", handleCarsUpdate, {delete: true, car_id: car_id});
