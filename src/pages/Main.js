@@ -4,13 +4,14 @@ import {styled} from '@mui/material/styles';
 import {
     Avatar,
     BottomNavigation,
-    BottomNavigationAction, Button,
+    BottomNavigationAction, Box, Button,
     Container, Fab, FormControlLabel, FormGroup, Grid,
     IconButton,
     Paper,
     Slide, Stack, Switch, Table, TextField, ThemeProvider, Typography
 } from "@mui/material";
 import {
+    Delete as DeleteIcon,
     Map as MapIcon,
     Person as ProfileIcon,
     Flag as Race,
@@ -21,7 +22,7 @@ import {
 } from "@mui/icons-material";
 import darkTheme from "../themes/DarkTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {callApi, handleSubmit} from "../utils";
+import {callApi, getCookie, handleSubmit} from "../utils";
 import {DataGrid} from '@mui/x-data-grid';
 import $ from 'jquery';
 import {GridColDef} from "@mui/x-data-grid";
@@ -59,9 +60,6 @@ const fabStyle = {
 };
 
 
-
-
-
 const Main = () => {
     const [loadedProfile, setLoadedProfile] = useState(false);
     const [loadedCars, setLoadedCars] = useState(false);
@@ -82,47 +80,32 @@ const Main = () => {
     let tmp_cars = useRef([]);
 
 
-    function handleSaveCar() {
-        setBlockAddWithoutFill();
+    function handleSaveCar(e, callback) {
+        setBlockAddWithoutFill(false);
+        handleSubmit(e, callback);
+    }
+
+    function deleteCar(car_id) {
+        callApi("http://localhost:80/backend/car.php", handleCarsUpdate, {delete: true, car_id: car_id});
+    }
+
+    function updateCarOnChangeCallback(data) {
+        if (data["status"] === "OK") {
+            console.log("Calling Update Cars");
+            callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
+        }
     }
 
     function generateCarRow(car) {
         let vehicle_img = "url(" + SampleCar + ")";
 
-        if (car["img_url"] != null)
+        if (car["img_url"] !== "")
             vehicle_img = "url(" + car['img_url'] + ")";
 
 
-        const rows = [
-            {id: 1, name: 'Nickname', value: car["name"]},
-            {id: 2, name: 'Vehicle Type', value: car["vehicle_type"]},
-            {id: 3, name: 'Brand', value: car["brand"]},
-            {id: 4, name: 'HP', value: car["hp"]},
-        ];
-
-        const columns = [
-            {
-                field: "name",
-                headerName: "Name",
-                sortable: false,
-                disableColumnMenu: true,
-                disableReorder: true,
-                selectable: false,
-                flex: true
-            }, {
-                field: "value",
-                headerName: "Value",
-                sortable: false,
-                disableColumnMenu: true,
-                disableReorder: true,
-                editable: true,
-                flex: true
-            }
-        ];
-
-
         return (
-            <Container maxWidth={"sm"} style={{
+            <Container key={"container" + car["id"]} maxWidth={"sm"} style={{
+                marginTop: "6px",
                 marginBottom: "6px",
                 backgroundColor: "#222222",
                 borderRadius: "10px",
@@ -136,34 +119,50 @@ const Main = () => {
                 flexDirection: "column"
 
             }}>
+                <div style={{marginTop: "12px", marginBottom: "12px"}}>
+                    <form action="http://localhost:80/backend/car.php"
+                          method="post"
+                          onSubmit={(event) => {
+                              handleSaveCar(event, updateCarOnChangeCallback);
+                          }}>
 
-                <DataGrid
-                    id
-                    rows={rows}
-                    columns={columns}
-                    density="compact"
-                    pageSize={8}
-                    autoHeight
-                    rowsPerPageOptions={[5]}
-                    headerHeight={0}
-                    hideFooter
-                    style={{border: 0, width: "100%"}}
-                />
-                <div style={{display: "inline-flex", justifyContent: "space-between", alignItems: "center"}}>
-                    <label htmlFor="photo-upload" style={{alignSelf: "center"}}>
-                        <Input accept="image/*" id="photo-upload" type="file"/>
-                        <Button variant="contained" component="span">
-                            Upload Photo
-                        </Button>
-                    </label>
-                    <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
-                        <Input accept="image/*" id="photo-camera" type="file"/>
-                        <IconButton color="primary" aria-label="upload picture" component="span">
-                            <PhotoCamera/>
-                        </IconButton>
-                    </label>
-                    <LoadingButton type={"button"} onClick={handleSaveCar} color={"anger"} style={{alignSelf: "center"}}
-                                   variant="contained">Save</LoadingButton>
+                        <input name={"car_id"} type={"text"} hidden value={car["id"]}/>
+                        <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
+                        <TextField className={"car-field"} name={"name"} label={"Nickname"} variant="filled"
+                                   size="small" defaultValue={car["name"]}/>
+
+                        <TextField className={"car-field"} name={"vehicle_type"} label={"Vehicle Type"} variant="filled"
+                                   size="small" defaultValue={car["vehicle_type"]}/>
+
+                        <TextField className={"car-field"} name={"brand"} label={"Brand"} variant="filled"
+                                   size="small" defaultValue={car["brand"]}/>
+
+                        <TextField className={"car-field"} name={"hp"} label={"Horse Power"} variant="filled"
+                                   size="small" defaultValue={car["hp"]}/>
+                        <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
+                            <Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
+                                deleteCar(car["id"])
+                            }}>
+                                Delete
+                            </Button>
+                            <label htmlFor="photo-upload" style={{alignSelf: "center"}}>
+                                <Input accept="image/*" id="photo-upload" type="file" name={"img_url_upload"}/>
+                                <Button variant="contained" component="span">
+                                    Upload Photo
+                                </Button>
+                            </label>
+                            <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
+                                <Input accept="image/*" id="photo-camera" type="file" name={"img_url_cam"}/>
+                                <IconButton color="primary" aria-label="upload picture" component="span">
+                                    <PhotoCamera/>
+                                </IconButton>
+                            </label>
+                            <LoadingButton type={"submit"} color={"anger"}
+                                           style={{alignSelf: "center"}}
+                                           variant="contained">Save</LoadingButton>
+                        </div>
+
+                    </form>
                 </div>
             </Container>
         );
@@ -188,20 +187,17 @@ const Main = () => {
 
         setLoadedCars(true);
 
-        let tmp = [];
-
-        if (data["cars"].length === 0) {
+        if (data["cars"] == null || data["cars"].length === 0) {
             setCarsExist(false);
-            return;
+        } else {
+            let tmp = [];
+            for (let i = 0; i < data["cars"].length; i++)
+                tmp.push(generateCarRow(data["cars"][i]));
+
+            tmp_cars.current = tmp;
+            setCars(tmp_cars.current);
+            setCarsExist(true);
         }
-
-
-        for (let i = 0; i < data["cars"].length; i++)
-            tmp.push(generateCarRow(data["cars"][i]));
-
-        tmp_cars.current = tmp;
-        setCars(tmp_cars.current);
-        setCarsExist(true);
     }
 
     function handleRacesUpdate(data) {
@@ -330,7 +326,7 @@ const Main = () => {
                             justifyItems: "center",
                             justifyContent: "center"
                         }} elevation={14}>
-                            {boxContent === "profile" ? profile_menu : boxContent==="cars" ? cars_menu  : races_menu}
+                            {boxContent === "profile" ? profile_menu : boxContent === "cars" ? cars_menu : races_menu}
                         </Paper>
                     </Slide>
 
@@ -365,6 +361,7 @@ const Main = () => {
                                 setBoxContent("profile");
                                 setBlockAddWithoutFill(false);
                             } else if (newValue === 2) {
+                                tmp_cars.current = [];
                                 callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
                                 setBoxContent("cars");
                             } else if (newValue === 3) {

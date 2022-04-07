@@ -7,9 +7,12 @@ export const handleSubmit = (e, callback) => {
         type: "POST",
         url: form.attr("action"),
         data: form.serialize(),
-        success(data) {
+        success: function (data) {
             callback(data);
         },
+        error: function (data) {
+            console.log("Request Error", data);
+        }
     });
 };
 
@@ -33,11 +36,11 @@ export const getCookie = (cname) => {
     return "";
 }
 
-export const callApi = (url, callback) => {
+export const callApi = (url, callback, custom_data = {}) => {
     $.ajax({
         type: "POST",
         url: url,
-        data: {session_id: getCookie("session_id")},
+        data: Object.assign({}, {session_id: getCookie("session_id")}, custom_data),
         success(data) {
             callback(data);
         },
