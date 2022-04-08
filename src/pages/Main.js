@@ -1,6 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Map, {GeolocateControl, Layer, Marker, Source} from 'react-map-gl';
 import {styled} from '@mui/material/styles';
+import DateFnsUtils from '@date-io/date-fns';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import {
     Avatar,
     BottomNavigation,
@@ -30,6 +32,7 @@ import darkTheme from "../themes/DarkTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {callApi, getCookie, handleSubmit} from "../utils";
 import SampleCar from "./../resources/images/sample_car.png";
+import {DateTimePicker, LocalizationProvider} from "@mui/lab";
 
 
 const access_token = "pk.eyJ1Ijoib3Bha2EiLCJhIjoiY2wxa3d6cmtyMDBpZzNjcWppMGM2djNxbCJ9.5Qka2qUoZBTZ5vkJpFwlKQ";
@@ -52,12 +55,51 @@ const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
     return "https://api.mapbox.com/directions/v5/mapbox/driving/" + waypoints + "?steps=true&geometries=geojson&access_token=" + access_token;
 }
 
+class RaceContainer extends React.Component {
+    constructor(race_data) {
+        super();
+        this.state = {
+            raceTime: race_data["start_time"]
+        };
+        this.changeDate = this.changeDate.bind(this);
+    }
+    componentDidMount() {
+        console.log("mounted");
+        this.changeDate = this.changeDate.bind(this);
+    }
+
+    changeDate(date) {
+        this.setState({
+            raceTime: date
+        });
+    }
+
+    render() {
+        return (
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DateTimePicker
+                    label="Date&Time picker"
+                    value={this.state.raceTime}
+                    onChange={this.changeDate}
+                    disablePast
+                    renderInput={(params) => <TextField {...params} className={"menu-field"}
+                                                        name={"start_time"} label={"Start Time"}
+                                                        variant="filled"
+                                                        size="small"/>}
+                />
+            </LocalizationProvider>
+        );
+    }
+}
+
 
 const Main = () => {
     const waypoints = useRef([]);
+    const tmp_cars = useRef([]);
+    const tmp_races = useRef([]);
 
     //TODO: connect to button to set deletion mode
-
+    const [raceEditMode, setRaceEditMode] = useState(false);
     const [geojson, setGeoJson] = useState({});
     const [delWaypointMode, setDelWaypointMode] = useState(false);
     const [markers, setMarkers] = useState([]);
@@ -69,9 +111,9 @@ const Main = () => {
     const [loadedProfile, setLoadedProfile] = useState(false);
     const [loadedCars, setLoadedCars] = useState(false);
     const [loadedRaces, setLoadedRaces] = useState(false);
-    const [loadedUserRaces, setUserLoadedRaces] = useState(false);
 
-    const [blockAddCar, setBlockAddWithoutFill] = useState(false);
+    const [blockAddRace, setBlockAddRace] = useState(false);
+    const [blockAddCar, setBlockAddCar] = useState(false);
     const [carsExist, setCarsExist] = useState(false);
     const [loadingState, setLoading] = useState(false);
     const [boxContent, setBoxContent] = React.useState("map");
@@ -82,6 +124,7 @@ const Main = () => {
     const containerRef = React.useRef(null);
     const [mapControls, setMapControls] = useState(null);
     const [cars, setCars] = useState(null);
+    const [races, setRaces] = useState(null);
 
     const layerStyle = {
         id: 'track',
@@ -114,14 +157,13 @@ const Main = () => {
                 coordinates: route
             }
         };
-        console.log(geoJsonTmp);
+
         setGeoJson(geoJsonTmp);
     }
 
-    let tmp_cars = useRef([]);
 
     function handleSaveCar(e, callback) {
-        setBlockAddWithoutFill(false);
+        setBlockAddCar(false);
         handleSubmit(e, callback);
     }
 
@@ -230,16 +272,17 @@ const Main = () => {
 
                         <input name={"car_id"} type={"text"} hidden value={car["id"]}/>
                         <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
-                        <TextField className={"car-field"} name={"name"} label={"Nickname"} variant="filled"
+                        <TextField className={"menu-field"} name={"name"} label={"Nickname"} variant="filled"
                                    size="small" defaultValue={car["name"]}/>
 
-                        <TextField className={"car-field"} name={"vehicle_type"} label={"Vehicle Type"} variant="filled"
+                        <TextField className={"menu-field"} name={"vehicle_type"} label={"Vehicle Type"}
+                                   variant="filled"
                                    size="small" defaultValue={car["vehicle_type"]}/>
 
-                        <TextField className={"car-field"} name={"brand"} label={"Brand"} variant="filled"
+                        <TextField className={"menu-field"} name={"brand"} label={"Brand"} variant="filled"
                                    size="small" defaultValue={car["brand"]}/>
 
-                        <TextField className={"car-field"} name={"hp"} label={"Horse Power"} variant="filled"
+                        <TextField className={"menu-field"} name={"hp"} label={"Horse Power"} variant="filled"
                                    size="small" defaultValue={car["hp"]}/>
                         <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
                             <Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
@@ -302,22 +345,94 @@ const Main = () => {
         }
     }
 
+    function generateRaceRow(race) {
+
+        let vehicle_img = "url(" + SampleCar + ")";
+
+        if (race["img_url"] !== "")
+            vehicle_img = "url(" + race['img_url'] + ")";
+
+        const tmp_rc= React.createElement(RaceContainer,race);
+
+        return (
+            <Container key={"container" + race["race_id"]} maxWidth={"sm"} style={{
+                marginTop: "6px",
+                marginBottom: "6px",
+                backgroundColor: "#222222",
+                borderRadius: "10px",
+                backgroundImage: vehicle_img,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundBlendMode: "darken",
+                backgroundRepeat: "no-repeat",
+                display: "flex",
+                alignContent: "center",
+                flexDirection: "column"
+
+            }}>
+                <div style={{marginTop: "12px", marginBottom: "12px"}}>
+                    <form action="http://localhost:80/backend/race.php"
+                          method="post"
+                          onSubmit={(event) => {
+                              handleSaveCar(event, updateCarOnChangeCallback);
+                          }}>
+
+                        <input name={"race_id"} type={"text"} hidden value={race["race_id"]}/>
+                        <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
+                        <TextField className={"menu-field"} name={"name"} label={"Nickname"} variant="filled"
+                                   size="small" defaultValue={race["name"]}/>
+                        {tmp_rc}
+
+                        <TextField className={"menu-field"} name={"brand"} label={"Brand"} variant="filled"
+                                   size="small" defaultValue={race["brand"]}/>
+
+                        <TextField className={"menu-field"} name={"hp"} label={"Horse Power"} variant="filled"
+                                   size="small" defaultValue={race["hp"]}/>
+                        <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
+                            <Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
+                                deleteCar(race["id"])
+                            }}>
+                                Delete
+                            </Button>
+                            <label htmlFor="photo-upload" style={{alignSelf: "center"}}>
+                                <Input accept="image/*" id="photo-upload" type="file" name={"img_url_upload"}/>
+                                <Button variant="contained" component="span">
+                                    Upload Photo
+                                </Button>
+                            </label>
+                            <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
+                                <Input accept="image/*" id="photo-camera" type="file" name={"img_url_cam"}/>
+                                <IconButton color="primary" aria-label="upload picture" component="span">
+                                    <PhotoCamera/>
+                                </IconButton>
+                            </label>
+                            <LoadingButton type={"submit"} color={"anger"}
+                                           style={{alignSelf: "center"}}
+                                           variant="contained">Save</LoadingButton>
+                        </div>
+
+                    </form>
+                </div>
+            </Container>
+        );
+    }
+
     function handleRacesUpdate(data) {
         if (data["status"] === "FAIL") {
             window.location = "/?unauthorized=1";
             return;
         }
-        //TODO
-        setLoadedRaces(true);
-    }
 
-    function handleUserRacesUpdate(data) {
-        if (data["status"] === "FAIL") {
-            window.location = "/?unauthorized=1";
-            return;
-        }
-        //TODO
-        setUserLoadedRaces(true);
+        setLoadedRaces(true);
+
+        let tmp = [];
+        const races = data["races"];
+
+        for (let i = 0; i < races.length; i++)
+            tmp.push(generateRaceRow(races[i]));
+
+        tmp_cars.current = tmp;
+        setRaces(tmp_cars.current);
     }
 
     if (!loadedProfile)
@@ -327,10 +442,11 @@ const Main = () => {
         callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
 
     if (!loadedRaces)
-        callApi("http://localhost:80/backend/races.php", handleRacesUpdate);
+        callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
 
-    if (!loadedUserRaces)
-        callApi("http://localhost:80/backend/user_race.php", handleUserRacesUpdate);
+
+//callApi("http://localhost/backend/race.php", function () {
+//                 }, {race_id: 1, waypoints: waypoints.current});
 
     const mapControl = (
         <div style={fabStyle}>
@@ -341,10 +457,11 @@ const Main = () => {
                       icon={<DeleteOutlined/>} checkedIcon={<DeleteIcon/>}/>
 
             <Button size={"large"} onClick={function () {
+                setRaceEditMode(false);
                 setNavVal(2);
                 setChecked(true);
                 setMapControls(null);
-                //TODO: send race to server for save
+                createNewRace();
             }} variant="contained" style={{color: "#f8f8f8", backgroundColor: "darkgreen"}} endIcon={<Check/>}>
                 Save
             </Button>
@@ -352,16 +469,20 @@ const Main = () => {
     );
 
     const races_menu = (
-        <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
-
+        <div>
             <Fab color="#333333" style={fabStyle} aria-label="add" onClick={function () {
+                setRaceEditMode(true);
                 setChecked(false);
                 setNavVal(0);
                 setMapControls(mapControl);
             }}>
                 <Add/>
             </Fab>
-        </Container>
+            <Stack style={{width: "100vw", display: "flex", alignContent: "center", justifyContent: "center"}}
+                   color={"textwhitish"}>
+                {races}
+            </Stack>
+        </div>
     );
 
     const profile_menu = (
@@ -375,7 +496,7 @@ const Main = () => {
                     <Avatar style={{alignSelf: "center"}} {...('Kent Dodds')} />
 
                     <TextField color={"textwhitish"} id="nickname" label="Nickname" variant="outlined"
-                               value={nicknameVal}/>
+                               defaultValue={nicknameVal}/>
                     <TextField color={"textwhitish"} id="password" label="New Password" variant="outlined"/>
                     <div>
                         <span className={"text-normal"} style={{alignSelf: "left", marginRight: "30%"}}>Karma</span>
@@ -390,6 +511,22 @@ const Main = () => {
     );
 
 
+    function createNewRace() {
+        //TODO
+        if (blockAddRace)
+            return;
+
+        tmp_races.current.push(generateRaceRow({
+            name: "Enter Name",
+            brand: "Enter Brand",
+            vehicle_type: "Enter Type(Example Corolla GR)",
+            hp: "0"
+        }));
+
+        setBlockAddRace(true);
+        setRaces(tmp_races.current);
+    }
+
     function createNewCar() {
         if (blockAddCar)
             return;
@@ -400,7 +537,7 @@ const Main = () => {
             hp: "0"
         }));
 
-        setBlockAddWithoutFill(true,);
+        setBlockAddCar(true,);
         setCarsExist(true);
         setCars(tmp_cars.current);
     }
@@ -426,9 +563,11 @@ const Main = () => {
     }
 
     function handleAddWaypoint(event) {
+        if (!raceEditMode)
+            return;
         const pos = event.lngLat;
         if (!delWaypointMode)
-            waypoints.current.push(pos);
+            waypoints.current.push(Object.assign({}, pos, {step: (waypoints.current.length + 1)}));
         updateMarkers();
     }
 
@@ -457,7 +596,8 @@ const Main = () => {
                             {marker}
                         </Grid>
                         <Grid item>
-                            <Typography color={"black"} variant={"h5"} fontWeight={"1200"}>{i > 0 && i < last ? i : null}</Typography>
+                            <Typography color={"black"} variant={"h5"}
+                                        fontWeight={"1000"}>{i > 0 && i < last ? i : null}</Typography>
                         </Grid>
                     </Grid>);
 
@@ -495,9 +635,10 @@ const Main = () => {
                     //pitch={60}
 
                     mapboxAccessToken={access_token}
-                    interactive={true}
                     //TODO: Fix this
                     viewState={coords}
+
+                    onZoomStart={resetCoords}
                     onDragStart={resetCoords}
                     style={{width: "100vw", height: "100vh"}}
                     mapStyle="mapbox://styles/opaka/cl1kxb42p00o514o3ix7xo2x9"
@@ -564,16 +705,15 @@ const Main = () => {
                             if (newValue === 1) {
                                 callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
                                 setBoxContent("profile");
-                                setBlockAddWithoutFill(false);
+                                setBlockAddCar(false);
                             } else if (newValue === 2) {
                                 tmp_cars.current = [];
                                 callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
                                 setBoxContent("cars");
                             } else if (newValue === 3) {
-                                callApi("http://localhost:80/backend/races.php", handleRacesUpdate);
-                                callApi("http://localhost:80/backend/user_race.php", handleUserRacesUpdate);
+                                callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
                                 setBoxContent("races");
-                                setBlockAddWithoutFill(false);
+                                setBlockAddCar(false);
                             }
                         }}
                     >
