@@ -1,4 +1,5 @@
 import $ from "jquery";
+import {access_token} from "./config";
 
 export const handleSubmit = (e, callback) => {
     e.preventDefault();
@@ -47,3 +48,9 @@ export const callApi = (url, callback, custom_data = {}) => {
     });
 };
 
+export const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
+    let value = Object.values(__waypoints);
+    let waypoint_pairs = value.map(object => object.lng + "," + object.lat);
+    const waypoints = waypoint_pairs.join(";");
+    return "https://api.mapbox.com/directions/v5/mapbox/driving/" + waypoints + "?steps=true&geometries=geojson&access_token=" + access_token;
+}

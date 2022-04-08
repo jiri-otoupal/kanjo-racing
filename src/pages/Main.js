@@ -1,96 +1,50 @@
-import React, {useEffect, useRef, useState} from 'react';
-import Map, {GeolocateControl, Layer, Marker, Source} from 'react-map-gl';
-import {styled} from '@mui/material/styles';
-import DateFnsUtils from '@date-io/date-fns';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import React, {useRef, useState} from 'react';
+import Map, {Layer, Marker, Source} from 'react-map-gl';
 import {
     Avatar,
     BottomNavigation,
-    BottomNavigationAction, Box, Button, Checkbox,
-    Container, Fab, FormControlLabel, FormGroup, Grid,
+    BottomNavigationAction,
+    Button,
+    Checkbox,
+    Container,
+    Fab,
+    Grid,
     IconButton,
     Paper,
-    Slide, Stack, Switch, Table, TextField, ThemeProvider, Typography
+    Slide,
+    Stack,
+    TextField,
+    ThemeProvider,
+    Typography
 } from "@mui/material";
 import {
+    Add,
+    Check,
+    Circle,
     Delete as DeleteIcon,
+    DeleteOutlined,
+    DirectionsCar,
+    Flag as Race,
+    FlagCircle,
+    Garage,
     Map as MapIcon,
     Person as ProfileIcon,
-    Flag as Race,
-    Report,
-    Add,
-    Garage,
     PhotoCamera,
-    DirectionsCar,
-    Circle,
-    StartRounded,
-    FlagCircle,
-    Check,
-    DeleteOutlined
+    Report,
+    StartRounded
 } from "@mui/icons-material";
 import darkTheme from "../themes/DarkTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
-import {callApi, getCookie, handleSubmit} from "../utils";
+import {
+    callApi,
+    getCookie,
+    getInterpolatedPathRequestFromWaypoints,
+    handleSubmit
+} from "../utils";
 import SampleCar from "./../resources/images/sample_car.png";
-import {DateTimePicker, LocalizationProvider} from "@mui/lab";
-
-
-const access_token = "pk.eyJ1Ijoib3Bha2EiLCJhIjoiY2wxa3d6cmtyMDBpZzNjcWppMGM2djNxbCJ9.5Qka2qUoZBTZ5vkJpFwlKQ";
-
-
-const Input = styled('input')({
-    display: 'none',
-});
-
-const fabStyle = {
-    position: 'fixed',
-    bottom: 75,
-    right: 16,
-};
-
-const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
-    let value = Object.values(__waypoints);
-    let waypoint_pairs = value.map(object => object.lng + "," + object.lat);
-    const waypoints = waypoint_pairs.join(";");
-    return "https://api.mapbox.com/directions/v5/mapbox/driving/" + waypoints + "?steps=true&geometries=geojson&access_token=" + access_token;
-}
-
-class RaceContainer extends React.Component {
-    constructor(race_data) {
-        super();
-        this.state = {
-            raceTime: race_data["start_time"]
-        };
-        this.changeDate = this.changeDate.bind(this);
-    }
-    componentDidMount() {
-        console.log("mounted");
-        this.changeDate = this.changeDate.bind(this);
-    }
-
-    changeDate(date) {
-        this.setState({
-            raceTime: date
-        });
-    }
-
-    render() {
-        return (
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DateTimePicker
-                    label="Date&Time picker"
-                    value={this.state.raceTime}
-                    onChange={this.changeDate}
-                    disablePast
-                    renderInput={(params) => <TextField {...params} className={"menu-field"}
-                                                        name={"start_time"} label={"Start Time"}
-                                                        variant="filled"
-                                                        size="small"/>}
-                />
-            </LocalizationProvider>
-        );
-    }
-}
+import {RaceTimeSelector} from "../components/RaceTimeSelector";
+import {access_token} from "../config";
+import {fabStyle, Input} from "../components/styles/main";
 
 
 const Main = () => {
@@ -348,12 +302,9 @@ const Main = () => {
     function generateRaceRow(race) {
 
         let vehicle_img = "url(" + SampleCar + ")";
-
         if (race["img_url"] !== "")
             vehicle_img = "url(" + race['img_url'] + ")";
-
-        const tmp_rc= React.createElement(RaceContainer,race);
-
+        const tmp_rc = React.createElement(RaceTimeSelector, race);
         return (
             <Container key={"container" + race["race_id"]} maxWidth={"sm"} style={{
                 marginTop: "6px",
