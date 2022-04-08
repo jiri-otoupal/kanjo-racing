@@ -8,3 +8,18 @@ export const fabStyle = {
     bottom: 75,
     right: 16,
 };
+
+export const paperStyle = {
+    marginTop: "6px",
+    marginBottom: "6px",
+    backgroundColor: "#222222",
+    borderRadius: "10px",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundBlendMode: "darken",
+    backgroundRepeat: "no-repeat",
+    display: "flex",
+    alignContent: "center",
+    flexDirection: "column"
+
+};

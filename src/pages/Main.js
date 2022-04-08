@@ -45,6 +45,7 @@ import SampleCar from "./../resources/images/sample_car.png";
 import {RaceTimeSelector} from "../components/RaceTimeSelector";
 import {access_token} from "../config";
 import {fabStyle, Input} from "../components/styles/main";
+import RaceContainer from "../components/RaceContainer";
 
 
 const Main = () => {
@@ -118,6 +119,11 @@ const Main = () => {
 
     function handleSaveCar(e, callback) {
         setBlockAddCar(false);
+        handleSubmit(e, callback);
+    }
+
+    function handleSaveRace(e, callback) {
+        setBlockAddRace(false);
         handleSubmit(e, callback);
     }
 
@@ -299,72 +305,26 @@ const Main = () => {
         }
     }
 
-    function generateRaceRow(race) {
+    function updateRaceOnChangeCallback(data) {
+        if (data["status"] === "OK") {
+            console.log("Calling Update Races");
+            callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
+        }
+    }
 
-        let vehicle_img = "url(" + SampleCar + ")";
-        if (race["img_url"] !== "")
-            vehicle_img = "url(" + race['img_url'] + ")";
-        const tmp_rc = React.createElement(RaceTimeSelector, race);
+    function deleteRace(id) {
+        callApi("http://localhost:80/backend/race.php", handleRacesUpdate, {delete: true, race_id: id});
+    }
+
+    function generateRaceRow(race, i) {
+        const raceContainer = React.createElement(RaceContainer, {
+            r: race, h: handleSaveRace,
+            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints.current, races: i
+        });
+
+
         return (
-            <Container key={"container" + race["race_id"]} maxWidth={"sm"} style={{
-                marginTop: "6px",
-                marginBottom: "6px",
-                backgroundColor: "#222222",
-                borderRadius: "10px",
-                backgroundImage: vehicle_img,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundBlendMode: "darken",
-                backgroundRepeat: "no-repeat",
-                display: "flex",
-                alignContent: "center",
-                flexDirection: "column"
-
-            }}>
-                <div style={{marginTop: "12px", marginBottom: "12px"}}>
-                    <form action="http://localhost:80/backend/race.php"
-                          method="post"
-                          onSubmit={(event) => {
-                              handleSaveCar(event, updateCarOnChangeCallback);
-                          }}>
-
-                        <input name={"race_id"} type={"text"} hidden value={race["race_id"]}/>
-                        <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
-                        <TextField className={"menu-field"} name={"name"} label={"Nickname"} variant="filled"
-                                   size="small" defaultValue={race["name"]}/>
-                        {tmp_rc}
-
-                        <TextField className={"menu-field"} name={"brand"} label={"Brand"} variant="filled"
-                                   size="small" defaultValue={race["brand"]}/>
-
-                        <TextField className={"menu-field"} name={"hp"} label={"Horse Power"} variant="filled"
-                                   size="small" defaultValue={race["hp"]}/>
-                        <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
-                            <Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
-                                deleteCar(race["id"])
-                            }}>
-                                Delete
-                            </Button>
-                            <label htmlFor="photo-upload" style={{alignSelf: "center"}}>
-                                <Input accept="image/*" id="photo-upload" type="file" name={"img_url_upload"}/>
-                                <Button variant="contained" component="span">
-                                    Upload Photo
-                                </Button>
-                            </label>
-                            <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
-                                <Input accept="image/*" id="photo-camera" type="file" name={"img_url_cam"}/>
-                                <IconButton color="primary" aria-label="upload picture" component="span">
-                                    <PhotoCamera/>
-                                </IconButton>
-                            </label>
-                            <LoadingButton type={"submit"} color={"anger"}
-                                           style={{alignSelf: "center"}}
-                                           variant="contained">Save</LoadingButton>
-                        </div>
-
-                    </form>
-                </div>
-            </Container>
+            raceContainer
         );
     }
 
@@ -380,10 +340,10 @@ const Main = () => {
         const races = data["races"];
 
         for (let i = 0; i < races.length; i++)
-            tmp.push(generateRaceRow(races[i]));
+            tmp.push(generateRaceRow(races[i], i));
 
-        tmp_cars.current = tmp;
-        setRaces(tmp_cars.current);
+        tmp_races.current = tmp;
+        setRaces(tmp_races.current);
     }
 
     if (!loadedProfile)
@@ -429,7 +389,7 @@ const Main = () => {
             }}>
                 <Add/>
             </Fab>
-            <Stack style={{width: "100vw", display: "flex", alignContent: "center", justifyContent: "center"}}
+            <Stack style={{width: "100vw",height: "100%", display: "flex", alignContent: "center", justifyContent: "center"}}
                    color={"textwhitish"}>
                 {races}
             </Stack>
@@ -467,12 +427,11 @@ const Main = () => {
         if (blockAddRace)
             return;
 
+
         tmp_races.current.push(generateRaceRow({
-            name: "Enter Name",
-            brand: "Enter Brand",
-            vehicle_type: "Enter Type(Example Corolla GR)",
-            hp: "0"
+            name: "Enter Race Name",
         }));
+
 
         setBlockAddRace(true);
         setRaces(tmp_races.current);
@@ -508,7 +467,6 @@ const Main = () => {
 
 
     function handleRemoveWaypoint(i) {
-        console.log("removing", i);
         waypoints.current.pop(i);
         updateMarkers();
     }
@@ -608,17 +566,17 @@ const Main = () => {
                         <Paper sx={{
                             overflowX: "hidden",
                             maxHeight: "90vh",
-                            overflowY: 'auto',
-                            position: "absolute",
-                            width: "100vw",
-                            height: "100vh",
+                            overflowY: "auto",
+                            position: "fixed",
+                            width: "100%",
+                            height: "100%",
                             backgroundColor: "#111111",
                             display: "flex",
                             alignItems: "center",
                             alignContent: "center",
                             justifyItems: "center",
                             justifyContent: "center"
-                        }} elevation={14}>
+                        }} elevation={0}>
                             {boxContent === "profile" ? profile_menu : boxContent === "cars" ? cars_menu : races_menu}
                         </Paper>
                     </Slide>

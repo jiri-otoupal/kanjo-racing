@@ -30,7 +30,7 @@ export class RaceTimeSelector extends React.Component {
                     disablePast
                     renderInput={(params) => <TextField {...params} className={"menu-field"}
                                                         name={"start_time"} label={"Start Time"}
-                                                        variant="filled"
+                                                        variant="filled" required
                                                         size="small"/>}
                 />
             </LocalizationProvider>
