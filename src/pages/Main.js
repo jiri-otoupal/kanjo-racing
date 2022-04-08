@@ -1,10 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import Map, {Layer, Source} from 'react-map-gl';
+import Map, {GeolocateControl, Layer, Marker, Source} from 'react-map-gl';
 import {styled} from '@mui/material/styles';
 import {
     Avatar,
     BottomNavigation,
-    BottomNavigationAction, Box, Button,
+    BottomNavigationAction, Box, Button, Checkbox,
     Container, Fab, FormControlLabel, FormGroup, Grid,
     IconButton,
     Paper,
@@ -18,36 +18,22 @@ import {
     Report,
     Add,
     Garage,
-    PhotoCamera
+    PhotoCamera,
+    DirectionsCar,
+    Circle,
+    StartRounded,
+    FlagCircle,
+    Check,
+    DeleteOutlined
 } from "@mui/icons-material";
 import darkTheme from "../themes/DarkTheme";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {callApi, getCookie, handleSubmit} from "../utils";
-import {DataGrid} from '@mui/x-data-grid';
-import $ from 'jquery';
-import {GridColDef} from "@mui/x-data-grid";
-import {GridRowsProp} from "@mui/x-data-grid";
 import SampleCar from "./../resources/images/sample_car.png";
 
 
 const access_token = "pk.eyJ1Ijoib3Bha2EiLCJhIjoiY2wxa3d6cmtyMDBpZzNjcWppMGM2djNxbCJ9.5Qka2qUoZBTZ5vkJpFwlKQ";
 
-
-const geojson = {
-    type: 'FeatureCollection',
-    features: [
-        {type: 'Feature', geometry: {type: 'Point', coordinates: [-122.4, 37.8]}}
-    ]
-};
-
-const layerStyle = {
-    id: 'point',
-    type: 'circle',
-    paint: {
-        'circle-radius': 10,
-        'circle-color': '#007cbf'
-    }
-};
 
 const Input = styled('input')({
     display: 'none',
@@ -59,8 +45,27 @@ const fabStyle = {
     right: 16,
 };
 
+const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
+    let value = Object.values(__waypoints);
+    let waypoint_pairs = value.map(object => object.lng + "," + object.lat);
+    const waypoints = waypoint_pairs.join(";");
+    return "https://api.mapbox.com/directions/v5/mapbox/driving/" + waypoints + "?steps=true&geometries=geojson&access_token=" + access_token;
+}
+
 
 const Main = () => {
+    const waypoints = useRef([]);
+
+    //TODO: connect to button to set deletion mode
+
+    const [geojson, setGeoJson] = useState({});
+    const [delWaypointMode, setDelWaypointMode] = useState(false);
+    const [markers, setMarkers] = useState([]);
+
+    const [coords, setCoords] = useState({});
+    const [latitude, setLatitude] = useState(0);
+    const [longitude, setLongitude] = useState(0);
+
     const [loadedProfile, setLoadedProfile] = useState(false);
     const [loadedCars, setLoadedCars] = useState(false);
     const [loadedRaces, setLoadedRaces] = useState(false);
@@ -75,7 +80,43 @@ const Main = () => {
     const [bottomNavVal, setNavVal] = React.useState(0);
     const [checked, setChecked] = React.useState(false);
     const containerRef = React.useRef(null);
+    const [mapControls, setMapControls] = useState(null);
     const [cars, setCars] = useState(null);
+
+    const layerStyle = {
+        id: 'track',
+        type: 'line',
+        layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        paint: {
+            'line-color': '#f8f8f8',
+            'line-width': 5,
+            'line-opacity': 0.75
+        }
+    };
+
+    const renderRoute = async (url) => {
+        const query = await fetch(
+            url,
+            {method: 'GET'}
+        );
+        const json = await query.json();
+        const data = json.routes[0];
+        const route = data.geometry.coordinates;
+
+        const geoJsonTmp = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+                type: 'LineString',
+                coordinates: route
+            }
+        };
+        console.log(geoJsonTmp);
+        setGeoJson(geoJsonTmp);
+    }
 
     let tmp_cars = useRef([]);
 
@@ -84,11 +125,19 @@ const Main = () => {
         handleSubmit(e, callback);
     }
 
+    function getCoords(lat, long, zoom) {
+        return {
+            latitude: lat,
+            longitude: long,
+            zoom: zoom
+        };
+    }
+
+
     let track = {
         // (B) PROPERTIES & SETTINGS
-        updated: true,
         watchOptions: {
-            timeout: 3000,
+            timeout: 10000,
             maxAge: 0,
             enableHighAccuracy: true
         },
@@ -102,17 +151,28 @@ const Main = () => {
 
         },
 
-        callback: () => {
+        just_once: () => {
+            if (navigator.geolocation)
+                navigator.geolocation.getCurrentPosition(track.callback, track.handleError);
+        },
 
+        callback: (pos) => {
+            const coords1 = getCoords(pos.coords.latitude, pos.coords.longitude, 12);
+            setCoords(coords1);
         },
 
         // (D) UPDATE CURRENT LOCATION TO SERVER
         update: (pos) => {
 
-                callApi("http://localhost:80/backend/tracking.php", track.callback, {
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude
-                });
+            callApi("http://localhost:80/backend/tracking.php", track.callback, {
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude
+            });
+
+            if (latitude == 0) {
+                setLatitude(pos.coords.latitude);
+                setLongitude(pos.coords.longitude);
+            }
 
         },
 
@@ -121,6 +181,8 @@ const Main = () => {
         }
     };
 
+
+    //track.just_once();
 
     //track.init(); // Enables Tracking to DB
 
@@ -270,10 +332,33 @@ const Main = () => {
     if (!loadedUserRaces)
         callApi("http://localhost:80/backend/user_race.php", handleUserRacesUpdate);
 
+    const mapControl = (
+        <div style={fabStyle}>
+
+            <Checkbox size={"large"} onChange={e => {
+                setDelWaypointMode(e.target.checked)
+            }} style={{color: "#f8f8f8", marginRight: "16px", backgroundColor: "rgba(160, 0, 0, 1)"}}
+                      icon={<DeleteOutlined/>} checkedIcon={<DeleteIcon/>}/>
+
+            <Button size={"large"} onClick={function () {
+                setNavVal(2);
+                setChecked(true);
+                setMapControls(null);
+                //TODO: send race to server for save
+            }} variant="contained" style={{color: "#f8f8f8", backgroundColor: "darkgreen"}} endIcon={<Check/>}>
+                Save
+            </Button>
+        </div>
+    );
+
     const races_menu = (
         <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
 
-            <Fab color="#333333" style={fabStyle} aria-label="add">
+            <Fab color="#333333" style={fabStyle} aria-label="add" onClick={function () {
+                setChecked(false);
+                setNavVal(0);
+                setMapControls(mapControl);
+            }}>
                 <Add/>
             </Fab>
         </Container>
@@ -334,22 +419,98 @@ const Main = () => {
     );
 
 
+    function handleRemoveWaypoint(i) {
+        console.log("removing", i);
+        waypoints.current.pop(i);
+        updateMarkers();
+    }
+
+    function handleAddWaypoint(event) {
+        const pos = event.lngLat;
+        if (!delWaypointMode)
+            waypoints.current.push(pos);
+        updateMarkers();
+    }
+
+
+    function updateMarkers() {
+        let tmp_markers = [];
+        if (waypoints.current.length)
+            //TODO: Marker limit 12
+            for (let i = 0; i < waypoints.current.length; i++) {
+                const waypoint = waypoints.current[i];
+                const long = waypoint.lng;
+                const lat = waypoint.lat;
+                const last = waypoints.current.length - 1;
+
+                let marker = <Circle className={"MarkerColor"}/>;
+
+                if (i === 0)
+                    marker = <StartRounded style={{color: "rgb(255,255,255,0.7)"}}/>
+                else if (i === last)
+                    marker = <FlagCircle style={{color: "rgb(255,255,255,0.7)"}}/>
+
+
+                const markerBody = (
+                    <Grid container direction="row" alignItems="center">
+                        <Grid item>
+                            {marker}
+                        </Grid>
+                        <Grid item>
+                            <Typography color={"black"} variant={"h5"} fontWeight={"1200"}>{i > 0 && i < last ? i : null}</Typography>
+                        </Grid>
+                    </Grid>);
+
+                tmp_markers.push(
+                    <Marker draggable={!delWaypointMode} onClick={function () {
+                        handleRemoveWaypoint(i)
+                    }} longitude={long} latitude={lat}>
+                        {markerBody}
+                    </Marker>
+                );
+
+            }
+        if (waypoints.current.length > 2) {
+            const url = getInterpolatedPathRequestFromWaypoints(waypoints.current);
+            renderRoute(url).then(r => function () {
+            });
+        }
+        setMarkers(tmp_markers);
+    }
+
+    function resetCoords() {
+        setCoords(null);
+    }
+
     return (
         <ThemeProvider theme={darkTheme}>
             <div>
                 <Map
-                    mapboxAccessToken={access_token}
                     initialViewState={{
-                        longitude: -100,
-                        latitude: 40,
-                        zoom: 12
+                        longitude: 14,
+                        latitude: 50,
+                        zoom: 2
                     }}
+                    //bearing={-60}
+                    //pitch={60}
+
+                    mapboxAccessToken={access_token}
+                    interactive={true}
+                    //TODO: Fix this
+                    viewState={coords}
+                    onDragStart={resetCoords}
                     style={{width: "100vw", height: "100vh"}}
                     mapStyle="mapbox://styles/opaka/cl1kxb42p00o514o3ix7xo2x9"
+                    onClick={handleAddWaypoint}
                 >
-                    <Source id="my-data" type="geojson" data={geojson}>
-                        <Layer {...layerStyle} />
+                    <Source id="route" type="geojson" data={geojson}>
+                        <Layer  {...layerStyle} />
                     </Source>
+                    <Marker longitude={longitude} latitude={latitude}>
+                        <DirectionsCar/>
+                    </Marker>
+
+                    {markers}
 
                     <Slide direction="up" in={checked} container={containerRef.current}>
                         <Paper sx={{
@@ -359,7 +520,7 @@ const Main = () => {
                             position: "absolute",
                             width: "100vw",
                             height: "100vh",
-                            "backgroundColor": "#111111",
+                            backgroundColor: "#111111",
                             display: "flex",
                             alignItems: "center",
                             alignContent: "center",
@@ -371,7 +532,10 @@ const Main = () => {
                     </Slide>
 
                     <IconButton aria-label={"Report"} id={"report-pos"}><Report/></IconButton>
+
+                    {mapControls}
                     <BottomNavigation
+                        size={"large"}
                         sx={{
                             bgcolor: '#333333',
                             '& .Mui-selected': {
@@ -390,6 +554,7 @@ const Main = () => {
                         showLabels
                         value={bottomNavVal}
                         onChange={(event, newValue) => {
+                            setMapControls(null);
                             setNavVal(newValue);
                             if (newValue !== 0)
                                 setChecked(true);
