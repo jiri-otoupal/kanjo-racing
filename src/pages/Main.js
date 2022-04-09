@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import Map, {Layer, Marker, Source} from 'react-map-gl';
+import Map, {Layer, Marker, Popup, Source} from 'react-map-gl';
 import {
     Avatar,
     BottomNavigation,
@@ -46,6 +46,9 @@ import {RaceTimeSelector} from "../components/RaceTimeSelector";
 import {access_token} from "../config";
 import {fabStyle, Input} from "../components/styles/main";
 import RaceContainer from "../components/RaceContainer";
+import PopupData from "../classes/PopupData";
+import Pin from "../components/Pin";
+import geoJsonTemplate from "../templates/GeoJsonTemplate";
 
 
 const Main = () => {
@@ -54,9 +57,9 @@ const Main = () => {
     const tmp_races = useRef([]);
 
     //TODO: connect to button to set deletion mode
+    const [popupInfo, setPopupInfo] = useState(null);
     const [raceEditMode, setRaceEditMode] = useState(false);
     const [geojson, setGeoJson] = useState({});
-    const [delWaypointMode, setDelWaypointMode] = useState(false);
     const [markers, setMarkers] = useState([]);
 
     const [coords, setCoords] = useState({});
@@ -104,14 +107,8 @@ const Main = () => {
         const data = json.routes[0];
         const route = data.geometry.coordinates;
 
-        const geoJsonTmp = {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-                type: 'LineString',
-                coordinates: route
-            }
-        };
+
+        const geoJsonTmp = geoJsonTemplate(route);
 
         setGeoJson(geoJsonTmp);
     }
@@ -316,10 +313,17 @@ const Main = () => {
         callApi("http://localhost:80/backend/race.php", handleRacesUpdate, {delete: true, race_id: id});
     }
 
+    function callbackEditMode(waypoints) {
+        setChecked(true);
+        setRaceEditMode(true);
+        waypoints.current = waypoints;
+        setNavVal(0);
+    }
+
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
             r: race, h: handleSaveRace,
-            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints.current, races: i
+            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints.current, c: callbackEditMode
         });
 
 
@@ -362,10 +366,11 @@ const Main = () => {
     const mapControl = (
         <div style={fabStyle}>
 
-            <Checkbox size={"large"} onChange={e => {
-                setDelWaypointMode(e.target.checked)
-            }} style={{color: "#f8f8f8", marginRight: "16px", backgroundColor: "rgba(160, 0, 0, 1)"}}
-                      icon={<DeleteOutlined/>} checkedIcon={<DeleteIcon/>}/>
+            <IconButton size={"large"} onClick={() =>
+                clearWaypoints()
+            } style={{color: "#f8f8f8", marginRight: "16px", backgroundColor: "rgba(160, 0, 0, 1)"}}>
+                <DeleteOutlined/>
+            </IconButton>
 
             <Button size={"large"} onClick={function () {
                 setRaceEditMode(false);
@@ -381,7 +386,7 @@ const Main = () => {
 
     const races_menu = (
         <div>
-            <Fab color="#333333" style={fabStyle} aria-label="add" onClick={function () {
+            <Fab key={"add_race_btn"} color="#333333" style={fabStyle} aria-label="add" onClick={function () {
                 setRaceEditMode(true);
                 setChecked(false);
                 setNavVal(0);
@@ -389,7 +394,13 @@ const Main = () => {
             }}>
                 <Add/>
             </Fab>
-            <Stack style={{width: "100vw",height: "100%", display: "flex", alignContent: "center", justifyContent: "center"}}
+            <Stack key={"races_list"} style={{
+                width: "100vw",
+                height: "100%",
+                display: "flex",
+                alignContent: "center",
+                justifyContent: "center"
+            }}
                    color={"textwhitish"}>
                 {races}
             </Stack>
@@ -465,8 +476,16 @@ const Main = () => {
         </div>
     );
 
+    function clearWaypoints() {
+        setRaceEditMode(false);
+        const geoJsonTmp = geoJsonTemplate({});
+        waypoints.current = [];
+        setGeoJson(geoJsonTmp);
+        updateMarkers();
+    }
 
     function handleRemoveWaypoint(i) {
+        setPopupInfo(null);
         waypoints.current.pop(i);
         updateMarkers();
     }
@@ -475,9 +494,13 @@ const Main = () => {
         if (!raceEditMode)
             return;
         const pos = event.lngLat;
-        if (!delWaypointMode)
-            waypoints.current.push(Object.assign({}, pos, {step: (waypoints.current.length + 1)}));
+        waypoints.current.push(Object.assign({}, pos, {step: (waypoints.current.length + 1)}));
         updateMarkers();
+    }
+
+    function setPopupData(event, popup_obj) {
+        event.stopPropagation();
+        setPopupInfo(popup_obj);
     }
 
 
@@ -487,17 +510,16 @@ const Main = () => {
             //TODO: Marker limit 12
             for (let i = 0; i < waypoints.current.length; i++) {
                 const waypoint = waypoints.current[i];
-                const long = waypoint.lng;
+                const lng = waypoint.lng;
                 const lat = waypoint.lat;
                 const last = waypoints.current.length - 1;
 
-                let marker = <Circle className={"MarkerColor"}/>;
+                let marker = <Circle key={"waypoint" + i} className={"MarkerColor"}/>;
 
                 if (i === 0)
-                    marker = <StartRounded style={{color: "rgb(255,255,255,0.7)"}}/>
+                    marker = <StartRounded key={"StartWaypoint" + i} style={{color: "rgb(255,255,255,0.7)"}}/>
                 else if (i === last)
-                    marker = <FlagCircle style={{color: "rgb(255,255,255,0.7)"}}/>
-
+                    marker = <FlagCircle key={"FinishWaypoint" + i} style={{color: "rgb(255,255,255,0.7)"}}/>
 
                 const markerBody = (
                     <Grid container direction="row" alignItems="center">
@@ -510,11 +532,15 @@ const Main = () => {
                         </Grid>
                     </Grid>);
 
+                const popup_obj = new PopupData(lng, lat, handleRemoveWaypoint.bind(i));
+
                 tmp_markers.push(
-                    <Marker draggable={!delWaypointMode} onClick={function () {
-                        handleRemoveWaypoint(i)
-                    }} longitude={long} latitude={lat}>
+                    <Marker anchor="bottom" key={"Marker" + i} draggable={true} longitude={lng}
+                            latitude={lat}>
                         {markerBody}
+                        <Button size={"small"} variant={"contained"}
+                                onMouseDown={(event) => setPopupData(event, popup_obj)
+                                }>Edit</Button>
                     </Marker>
                 );
 
@@ -531,6 +557,8 @@ const Main = () => {
         setCoords(null);
     }
 
+    console.log(popupInfo);
+
     return (
         <ThemeProvider theme={darkTheme}>
             <div>
@@ -546,7 +574,6 @@ const Main = () => {
                     mapboxAccessToken={access_token}
                     //TODO: Fix this
                     viewState={coords}
-
                     onZoomStart={resetCoords}
                     onDragStart={resetCoords}
                     style={{width: "100vw", height: "100vh"}}
@@ -561,6 +588,19 @@ const Main = () => {
                     </Marker>
 
                     {markers}
+
+                    {popupInfo && (
+                        <Popup
+                            anchor="top"
+                            longitude={popupInfo.lng}
+                            latitude={popupInfo.lat}
+                            closeOnClick={true}
+                            onClose={() => setPopupInfo(null)}
+                        >
+                            {popupInfo.component}
+                        </Popup>
+                    )}
+
 
                     <Slide direction="up" in={checked} container={containerRef.current}>
                         <Paper sx={{

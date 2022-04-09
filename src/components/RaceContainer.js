@@ -1,4 +1,4 @@
-import {getCookie} from "../utils";
+import {callApi, getCookie} from "../utils";
 import {Button, Container, FormControl, IconButton, InputLabel, Link, MenuItem, Select, TextField} from "@mui/material";
 import React from "react";
 import {Delete as DeleteIcon, PhotoCamera} from "@mui/icons-material";
@@ -12,11 +12,12 @@ class RaceContainer extends React.Component {
         super(props);
         const race = props["r"], handleSaveRace = props["h"],
             updateRaceOnChangeCallback = props["u"], deleteRace = props["d"], waypoints = props["w"],
-            races = props["races"];
+            callbackEditMode = props["c"];
 
         this.margin = {};
         //if (races === 0)
         //    this.margin = {marginTop: "90vh"};
+        this.callbackEditMode = callbackEditMode;
         this.vehicle_img = "url(" + SampleCar + ")";
         if (race["img_url"] !== "")
             this.vehicle_img = "url(" + race['img_url'] + ")";
@@ -27,15 +28,35 @@ class RaceContainer extends React.Component {
         this.waypoints = waypoints;
         this.state = {
             heat_level: "no_offence",
-            loading: false
+            loadingSave: false,
+            loadingEdit: false,
+            loadingJoin: false
         };
         this.changeHeatLevel = this.changeHeatLevel.bind(this);
-        this.changeLoading = this.changeLoading.bind(this);
+        this.changeLoadingSave = this.changeLoadingSave.bind(this);
     }
 
-    changeLoading(state) {
+    changeLoadingSave(state) {
         this.setState({
-            loading: state
+            loadingSave: state
+        });
+    }
+
+
+    //TODO:Implement Loading and Join
+    changeLoadingEdit(state) {
+        const callbackEditMode = this.callbackEditMode;
+
+        this.setState({
+            loadingEdit: state
+        });
+        //TODO: Implement backend
+        callApi("http://localhost:80/backend/waypoint.php",callbackEditMode);
+    }
+
+    changeLoadingJoin(state) {
+        this.setState({
+            loadingJoin: state
         });
     }
 
@@ -59,11 +80,27 @@ class RaceContainer extends React.Component {
         const deleteRace = this.delete_race;
         const timeSelector = React.createElement(RaceTimeSelector, this.race);
         const styles = Object.assign({}, paperStyle, this.margin, {backgroundImage: this.vehicle_img});
-        const changeLoading = this.changeLoading;
+        const changeLoading = this.changeLoadingSave;
+        const owner_elems = (<div><Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
+            deleteRace(id)
+        }}>
+            Delete
+        </Button>
+            <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
+                <Input accept="image/*" id="photo-camera" type="file" name={"img_cam"}/>
+                <IconButton color="primary" aria-label="upload picture" component="span">
+                    <PhotoCamera/>
+                </IconButton>
+            </label>
+            <LoadingButton type={"submit"} color={"anger"} loading={this.state.loadingSave}
+                           onClick={this.changeLoadingSave.bind(true)}
+                           style={{alignSelf: "center"}}
+                           variant="contained">Save</LoadingButton></div>);
+
 
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
-            <div style={{marginTop: "12px", marginBottom: "12px"}}>
+            <div key={"race_div" + this.race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
                 <form action="http://localhost:80/backend/race.php"
                       method="post"
                       onSubmit={(event) => {
@@ -86,6 +123,8 @@ class RaceContainer extends React.Component {
                     {timeSelector}
 
 
+                    <TextField className={"menu-field"} name={"laps"} label={"Laps"} variant="filled"
+                               size="small" defaultValue={this.race["laps"]}/>
                     <TextField className={"menu-field"} name={"min_racers"} label={"Minimum Racers"} variant="filled"
                                size="small" defaultValue={this.race["min_racers"]}/>
 
@@ -118,28 +157,27 @@ class RaceContainer extends React.Component {
                         </Select>
                     </FormControl>
 
-                    /*TODO: ADD Chat link*/
+
+                    {/*TODO: ADD Chat link*/}
 
                     <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
-                        <Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
-                            deleteRace(id)
-                        }}>
-                            Delete
-                        </Button>
-                        <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
-                            <Input accept="image/*" id="photo-camera" type="file" name={"img_cam"}/>
-                            <IconButton color="primary" aria-label="upload picture" component="span">
-                                <PhotoCamera/>
-                            </IconButton>
-                        </label>
-                        <LoadingButton type={"submit"} color={"anger"} loading={this.state.loading}
-                                       onClick={this.changeLoading.bind(true)}
-                                       style={{alignSelf: "center"}}
-                                       variant="contained">Save</LoadingButton>
+                        {this.race["owner_id"] === getCookie("user_id") ? owner_elems : null}
                         <Link style={{alignSelf: "center", marginLeft: "6px"}} variant="body2"
                               href={"https://www.google.com/maps/place/" + lat + "," + lng + "/@" + lat + "," + lng + "," + zoom + "z"}><span>Google
                             Maps<br/>Location</span></Link>
                     </div>
+
+                    {/*TODO: Join race, State if already joined make it "Leave Race" */}
+                    <LoadingButton color={"anger"} loading={this.state.loadingEdit}
+                                   onClick={this.changeLoadingEdit.bind(true)} fullWidth style={{marginTop: "6px"}}
+                                   type={"button"}
+                                   variant={"contained"}>Select
+                        Track</LoadingButton>
+                    <LoadingButton color={"anger"} loading={this.state.loadingJoin}
+                                   onClick={this.changeLoadingJoin.bind(true)} fullWidth style={{marginTop: "6px"}}
+                                   type={"button"} variant={"contained"}>Join
+                        Race</LoadingButton>
+
 
                 </form>
             </div>

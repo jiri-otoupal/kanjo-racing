@@ -61,6 +61,7 @@ const Sign_in = () => {
     function callback(obj) {
         if (obj["status"] === "OK") {
             setCookie("session_id", obj["cookie"], 30);
+            setCookie("user_id",obj["user_id"],30);
             setAlert(null);
             history.push("/main");
         } else {
@@ -70,7 +71,7 @@ const Sign_in = () => {
     }
 
 
-    return (<header className="App-header App-bg2">
+    return (<header className="App-header App-bg">
         <h1 className={"title dock-up"}>Kanjo Racing</h1>
         {alert}
         {form_state}
