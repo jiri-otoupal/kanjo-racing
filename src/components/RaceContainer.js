@@ -11,7 +11,7 @@ class RaceContainer extends React.Component {
     constructor(props) {
         super(props);
         const race = props["r"], handleSaveRace = props["h"],
-            updateRaceOnChangeCallback = props["u"], deleteRace = props["d"], waypoints = props["w"],
+            updateRaceOnChangeCallback = props["u"], deleteRace = props["d"],
             callbackEditMode = props["c"];
 
         this.margin = {};
@@ -25,7 +25,7 @@ class RaceContainer extends React.Component {
         this.handleSaveRace = handleSaveRace;
         this.updateRaceOnChangeCallback = updateRaceOnChangeCallback;
         this.delete_race = deleteRace;
-        this.waypoints = waypoints;
+        console.log(race);
         this.state = {
             heat_level: "no_offence",
             loadingSave: false,
@@ -42,17 +42,6 @@ class RaceContainer extends React.Component {
         });
     }
 
-
-    //TODO:Implement Loading and Join
-    changeLoadingEdit(state) {
-        const callbackEditMode = this.callbackEditMode;
-
-        this.setState({
-            loadingEdit: state
-        });
-        //TODO: Implement backend
-        callApi("http://localhost:80/backend/waypoint.php", callbackEditMode);
-    }
 
     changeLoadingJoin(state) {
         this.setState({
@@ -72,6 +61,7 @@ class RaceContainer extends React.Component {
 
     render() {
         const zoom = 14;
+        const race = this.race;
         const lat = this.race["latitude"];
         const lng = this.race["longitude"];
         const updateRaceOnChangeCallback = this.updateRaceOnChangeCallback;
@@ -81,6 +71,10 @@ class RaceContainer extends React.Component {
         const timeSelector = React.createElement(RaceTimeSelector, this.race);
         const styles = Object.assign({}, paperStyle, this.margin, {backgroundImage: this.vehicle_img});
         const changeLoading = this.changeLoadingSave;
+        const _waypoints = this.race["waypoints"];
+        console.log("Render Waypoints",_waypoints);
+        const callbackEditMode = this.callbackEditMode;
+
         const owner_elems = (<div><Button variant="outlined" startIcon={<DeleteIcon/>} onClick={function () {
             deleteRace(id)
         }}>
@@ -96,7 +90,8 @@ class RaceContainer extends React.Component {
                            onClick={this.changeLoadingSave.bind(true)}
                            style={{alignSelf: "center"}}
                            variant="contained">Save</LoadingButton></div>);
-
+        //callApi("http://localhost/backend/race.php", function () {
+        //}, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
 
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
@@ -105,20 +100,20 @@ class RaceContainer extends React.Component {
                       method="post"
                       onSubmit={(event) => {
                           handleSaveRace(event, function (data) {
+                              console.log("Waypoints in Race", id, _waypoints)
+                              race["waypoints"] = _waypoints;
+
                               updateRaceOnChangeCallback(data);
                               changeLoading(false);
-                              callApi("http://localhost/backend/race.php", function () {
-                              }, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
                           });
                       }}>
-
-                    <input name={"latitude"} type={"text"} hidden
-                           value={this.waypoints.length ? this.waypoints.current[0].lat : 30}/>
-                    <input name={"longitude"} type={"text"} hidden
-                           value={this.waypoints.length ? this.waypoints.current[0].lng : 30}/>
-                    <input name={"chat_link"} type={"text"} hidden value={""}/>
-                    <input name={"race_id"} type={"text"} hidden value={this.race["race_id"]}/>
-                    <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
+                    <input name={"latitude"} type={"text"} hidden readOnly
+                           value={_waypoints.length ? _waypoints[0].lat : 30}/>
+                    <input name={"longitude"} type={"text"} hidden readOnly
+                           value={_waypoints.length ? _waypoints[0].lng : 30}/>
+                    <input name={"chat_link"} type={"text"} hidden readOnly value={""}/>
+                    <input name={"race_id"} type={"text"} hidden readOnly value={this.race["race_id"]}/>
+                    <input name={"session_id"} type={"text"} hidden readOnly value={getCookie("session_id")}/>
                     <TextField className={"menu-field"} name={"name"} label={"Nickname"} required variant="filled"
                                size="small" defaultValue={this.race["name"]}/>
 
@@ -171,7 +166,10 @@ class RaceContainer extends React.Component {
 
                     {/*TODO: Join race, State if already joined make it "Leave Race" */}
                     <LoadingButton color={"anger"} loading={this.state.loadingEdit}
-                                   onClick={this.changeLoadingEdit.bind(true)} fullWidth style={{marginTop: "6px"}}
+                                   onClick={function () {
+                                       callbackEditMode(_waypoints)
+                                   }} fullWidth
+                                   style={{marginTop: "6px"}}
                                    type={"button"}
                                    variant={"contained"}>Edit
                         Track</LoadingButton>

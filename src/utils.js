@@ -1,13 +1,26 @@
 import $ from "jquery";
 import {access_token} from "./config";
 
-export const handleSubmit = (e, callback) => {
+function formDataToJson(form) {
+    let jsonObj = {};
+    $.map(form.serializeArray(), function (n, i) {
+        jsonObj[n.name] = n.value;
+    });
+
+    return jsonObj;
+}
+
+export const handleSubmit = (e, callback, custom_data = {}) => {
     e.preventDefault();
     const form = $(e.target);
+    const form_data_json = formDataToJson(form);
+    const data_concat = Object.assign({}, form_data_json, custom_data)
+    console.log("Data: ", data_concat, form_data_json);
+
     $.ajax({
         type: "POST",
         url: form.attr("action"),
-        data: form.serialize(),
+        data: data_concat,
         success: function (data) {
             callback(data);
         },

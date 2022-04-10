@@ -52,6 +52,7 @@ import geoJsonTemplate from "../templates/GeoJsonTemplate";
 
 
 const Main = () => {
+    const races_storage = useRef();
     const waypoints = useRef([]); //TODO: do dict of waypoints
     const tmp_cars = useRef([]);
     const tmp_races = useRef([]);
@@ -122,8 +123,7 @@ const Main = () => {
     }
 
     function handleSaveRace(e, callback) {
-        setBlockAddRace(false);
-        handleSubmit(e, callback);
+        handleSubmit(e, callback, {waypoints: waypoints.current, session_id: getCookie("session_id")});
     }
 
     function getCoords(lat, long, zoom) {
@@ -315,17 +315,24 @@ const Main = () => {
         callApi("http://localhost:80/backend/race.php", handleRacesUpdate, {delete: true, race_id: id});
     }
 
-    function callbackEditMode(waypoints) {
-        setChecked(true);
+    function callbackEditMode(_waypoints) {
+        if (_waypoints == null) {
+            console.log("Waypoints are null on edit")
+            return;
+        }
+        setMapControls(mapControl);
+        setChecked(false);
         setRaceEditMode(true);
-        waypoints.current = waypoints;
+        console.log("Requested waypoints for edit",_waypoints);
+        waypoints.current = _waypoints;
         setNavVal(0);
+        updateMarkers();
     }
 
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
             r: race, h: handleSaveRace,
-            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints, c: callbackEditMode
+            u: updateRaceOnChangeCallback, d: deleteRace, c: callbackEditMode
         });
 
 
@@ -344,12 +351,13 @@ const Main = () => {
 
         let tmp = [];
         const races = data["races"];
+        races_storage.current = races;
 
         for (let i = 0; i < races.length; i++)
             tmp.push(generateRaceRow(races[i], i));
 
         tmp_races.current = tmp;
-        setRaces(tmp_races.current);
+        setRaces(tmp_races.current); //TODO: maybe better to use ref
     }
 
     if (!loadedProfile)
@@ -368,15 +376,17 @@ const Main = () => {
     const mapControl = (
         <div style={fabStyle}>
 
-            <IconButton size={"large"} onClick={() =>
-                clearWaypoints()
+            <IconButton size={"large"} onClick={function () {
+                clearWaypoints();
+                setMapControls(null);
+            }
             } style={{color: "#f8f8f8", marginRight: "16px", backgroundColor: "rgba(160, 0, 0, 1)"}}>
                 <DeleteOutlined/>
             </IconButton>
 
             <Button size={"large"} onClick={function () {
                 setRaceEditMode(false);
-                setNavVal(2);
+                setNavVal(3);
                 setChecked(true);
                 setMapControls(null);
                 createNewRace();
@@ -390,6 +400,7 @@ const Main = () => {
     const races_menu = (
         <div>
             <Fab key={"add_race_btn"} color="#333333" style={fabStyle} aria-label="add" onClick={function () {
+                clearWaypoints();
                 setRaceEditMode(true);
                 setChecked(false);
                 setNavVal(0);
@@ -437,13 +448,13 @@ const Main = () => {
 
 
     function createNewRace() {
-        //TODO
+
         if (blockAddRace)
             return;
 
 
         tmp_races.current.push(generateRaceRow({
-            name: "Enter Race Name",
+            name: "Enter Race Name", owner_id: getCookie("user_id")
         }));
 
 
@@ -664,6 +675,7 @@ const Main = () => {
                             setMapControls(null);
                             setNavVal(newValue);
                             if (newValue !== 0) {
+                                clearWaypoints();
                                 setChecked(true);
                                 setDistance(null);
                             } else {
