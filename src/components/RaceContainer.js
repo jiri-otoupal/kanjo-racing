@@ -51,7 +51,7 @@ class RaceContainer extends React.Component {
             loadingEdit: state
         });
         //TODO: Implement backend
-        callApi("http://localhost:80/backend/waypoint.php",callbackEditMode);
+        callApi("http://localhost:80/backend/waypoint.php", callbackEditMode);
     }
 
     changeLoadingJoin(state) {
@@ -107,13 +107,15 @@ class RaceContainer extends React.Component {
                           handleSaveRace(event, function (data) {
                               updateRaceOnChangeCallback(data);
                               changeLoading(false);
+                              callApi("http://localhost/backend/race.php", function () {
+                              }, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
                           });
                       }}>
 
                     <input name={"latitude"} type={"text"} hidden
-                           value={this.waypoints.length ? this.waypoints[0].lat : 30}/>
+                           value={this.waypoints.length ? this.waypoints.current[0].lat : 30}/>
                     <input name={"longitude"} type={"text"} hidden
-                           value={this.waypoints.length ? this.waypoints[0].lng : 30}/>
+                           value={this.waypoints.length ? this.waypoints.current[0].lng : 30}/>
                     <input name={"chat_link"} type={"text"} hidden value={""}/>
                     <input name={"race_id"} type={"text"} hidden value={this.race["race_id"]}/>
                     <input name={"session_id"} type={"text"} hidden value={getCookie("session_id")}/>
@@ -171,7 +173,7 @@ class RaceContainer extends React.Component {
                     <LoadingButton color={"anger"} loading={this.state.loadingEdit}
                                    onClick={this.changeLoadingEdit.bind(true)} fullWidth style={{marginTop: "6px"}}
                                    type={"button"}
-                                   variant={"contained"}>Select
+                                   variant={"contained"}>Edit
                         Track</LoadingButton>
                     <LoadingButton color={"anger"} loading={this.state.loadingJoin}
                                    onClick={this.changeLoadingJoin.bind(true)} fullWidth style={{marginTop: "6px"}}

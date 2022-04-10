@@ -52,9 +52,10 @@ import geoJsonTemplate from "../templates/GeoJsonTemplate";
 
 
 const Main = () => {
-    const waypoints = useRef([]);
+    const waypoints = useRef([]); //TODO: do dict of waypoints
     const tmp_cars = useRef([]);
     const tmp_races = useRef([]);
+    const [distance, setDistance] = useState(null);
 
     //TODO: connect to button to set deletion mode
     const [popupInfo, setPopupInfo] = useState(null);
@@ -111,6 +112,7 @@ const Main = () => {
         const geoJsonTmp = geoJsonTemplate(route);
 
         setGeoJson(geoJsonTmp);
+        setDistance(data.distance);
     }
 
 
@@ -323,7 +325,7 @@ const Main = () => {
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
             r: race, h: handleSaveRace,
-            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints.current, c: callbackEditMode
+            u: updateRaceOnChangeCallback, d: deleteRace, w: waypoints, c: callbackEditMode
         });
 
 
@@ -378,6 +380,7 @@ const Main = () => {
                 setChecked(true);
                 setMapControls(null);
                 createNewRace();
+                setDistance(null);
             }} variant="contained" style={{color: "#f8f8f8", backgroundColor: "darkgreen"}} endIcon={<Check/>}>
                 Save
             </Button>
@@ -477,11 +480,13 @@ const Main = () => {
     );
 
     function clearWaypoints() {
+        setChecked(false);
         setRaceEditMode(false);
         const geoJsonTmp = geoJsonTemplate({});
         waypoints.current = [];
         setGeoJson(geoJsonTmp);
         updateMarkers();
+        setDistance(null);
     }
 
     function handleRemoveWaypoint(i) {
@@ -524,11 +529,13 @@ const Main = () => {
                 const markerBody = (
                     <Grid container direction="row" alignItems="center">
                         <Grid item>
-                            {marker}
-                        </Grid>
-                        <Grid item>
                             <Typography color={"black"} variant={"h5"}
                                         fontWeight={"1000"}>{i > 0 && i < last ? i : null}</Typography>
+                        </Grid>
+                        <Grid item>
+                            <Button style={{marginBottom: "16px"}} size={"small"} variant={"contained"}
+                                    onMouseDown={(event) => setPopupData(event, popup_obj)
+                                    }>Edit</Button>
                         </Grid>
                     </Grid>);
 
@@ -538,9 +545,7 @@ const Main = () => {
                     <Marker anchor="bottom" key={"Marker" + i} draggable={true} longitude={lng}
                             latitude={lat}>
                         {markerBody}
-                        <Button size={"small"} variant={"contained"}
-                                onMouseDown={(event) => setPopupData(event, popup_obj)
-                                }>Edit</Button>
+                        {marker}
                     </Marker>
                 );
 
@@ -557,7 +562,18 @@ const Main = () => {
         setCoords(null);
     }
 
-    console.log(popupInfo);
+    const distanceInfo = (
+        <div style={{
+            backgroundColor: "rgb(0,0,0,0.85)",
+            position: "fixed",
+            top: "12px",
+            left: "12px",
+            borderRadius: "12px"
+        }}>
+            <Typography variant={"h6"}
+                        style={{color: "white"}}>Distance: {(distance / 1000).toFixed(2)} km</Typography>
+        </div>);
+
 
     return (
         <ThemeProvider theme={darkTheme}>
@@ -601,6 +617,7 @@ const Main = () => {
                         </Popup>
                     )}
 
+                    {distance != null ? distanceInfo : null}
 
                     <Slide direction="up" in={checked} container={containerRef.current}>
                         <Paper sx={{
@@ -646,10 +663,12 @@ const Main = () => {
                         onChange={(event, newValue) => {
                             setMapControls(null);
                             setNavVal(newValue);
-                            if (newValue !== 0)
+                            if (newValue !== 0) {
                                 setChecked(true);
-                            else
+                                setDistance(null);
+                            } else {
                                 setChecked(false);
+                            }
 
                             if (newValue === 1) {
                                 callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
