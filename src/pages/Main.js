@@ -42,16 +42,15 @@ import {
     handleSubmit
 } from "../utils";
 import SampleCar from "./../resources/images/sample_car.png";
-import {RaceTimeSelector} from "../components/RaceTimeSelector";
 import {access_token} from "../config";
 import {fabStyle, Input} from "../components/styles/main";
 import RaceContainer from "../components/RaceContainer";
 import PopupData from "../classes/PopupData";
-import Pin from "../components/Pin";
 import geoJsonTemplate from "../templates/GeoJsonTemplate";
 
 
 const Main = () => {
+    const cars_ref = useRef([]);
     const races_storage = useRef();
     const waypoints = useRef([]); //TODO: do dict of waypoints
     const tmp_cars = useRef([]);
@@ -301,6 +300,7 @@ const Main = () => {
             tmp_cars.current = tmp;
             setCars(tmp_cars.current);
             setCarsExist(true);
+            cars_ref.current = data["cars"];
         }
     }
 
@@ -323,7 +323,7 @@ const Main = () => {
         setMapControls(mapControl);
         setChecked(false);
         setRaceEditMode(true);
-        console.log("Requested waypoints for edit",_waypoints);
+        console.log("Requested waypoints for edit", _waypoints);
         waypoints.current = _waypoints;
         setNavVal(0);
         updateMarkers();
@@ -332,7 +332,7 @@ const Main = () => {
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
             r: race, h: handleSaveRace,
-            u: updateRaceOnChangeCallback, d: deleteRace, c: callbackEditMode
+            u: updateRaceOnChangeCallback, d: deleteRace, c: callbackEditMode, cars: cars_ref
         });
 
 

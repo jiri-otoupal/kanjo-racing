@@ -54,7 +54,7 @@ export const callApi = (url, callback, custom_data = {}) => {
     $.ajax({
         type: "POST",
         url: url,
-        data: Object.assign({}, {session_id: getCookie("session_id")}, custom_data),
+        data: Object.assign({session_id: getCookie("session_id")}, custom_data),
         success(data) {
             callback(data);
         },
