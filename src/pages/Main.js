@@ -47,6 +47,7 @@ import {fabStyle, Input} from "../components/styles/main";
 import RaceContainer from "../components/RaceContainer";
 import PopupData from "../classes/PopupData";
 import geoJsonTemplate from "../templates/GeoJsonTemplate";
+import {Race as RacePane} from "../components/Race";
 
 
 const Main = () => {
@@ -62,6 +63,8 @@ const Main = () => {
     const [raceEditMode, setRaceEditMode] = useState(false);
     const [geojson, setGeoJson] = useState({});
     const [markers, setMarkers] = useState([]);
+    const [racerMarkers, setRacerMarkers] = useState([]);
+    const [waypointMarkers, setWaypointMarkers] = useState([]);
 
     const [coords, setCoords] = useState({});
     const [latitude, setLatitude] = useState(0);
@@ -99,7 +102,7 @@ const Main = () => {
         }
     };
 
-    const renderRoute = async (url) => {
+    const renderRoute = async (url, showDistance = true) => {
         const query = await fetch(
             url,
             {method: 'GET'}
@@ -112,7 +115,8 @@ const Main = () => {
         const geoJsonTmp = geoJsonTemplate(route);
 
         setGeoJson(geoJsonTmp);
-        setDistance(data.distance);
+        if (showDistance)
+            setDistance(data.distance);
     }
 
 
@@ -328,6 +332,31 @@ const Main = () => {
         setNavVal(0);
         updateMarkers();
     }
+
+    function callbackMapRacers(markers) {
+        setRacerMarkers(markers);
+    }
+
+    function callbackMapWaypoints(markers) {
+        setWaypointMarkers(markers);
+    }
+
+    function callbackDrawRaceRoute(coords) {
+        if (coords.length >= 1) {
+            const url = getInterpolatedPathRequestFromWaypoints(coords);
+            renderRoute(url,false).then(r => function () {
+            });
+        }
+    }
+
+    const race = React.createElement(RacePane, {
+            race: {race_id: 23},
+            mapUpdate: callbackMapRacers,
+            drawRoute: callbackDrawRaceRoute,
+            drawWaypoints: callbackMapWaypoints,
+            setMapLocation: setCoords
+        }
+    );
 
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
@@ -561,6 +590,8 @@ const Main = () => {
                 );
 
             }
+
+
         if (waypoints.current.length > 2) {
             const url = getInterpolatedPathRequestFromWaypoints(waypoints.current);
             renderRoute(url).then(r => function () {
@@ -588,6 +619,7 @@ const Main = () => {
 
     return (
         <ThemeProvider theme={darkTheme}>
+
             <div>
                 <Map
                     initialViewState={{
@@ -607,6 +639,9 @@ const Main = () => {
                     mapStyle="mapbox://styles/opaka/cl1kxb42p00o514o3ix7xo2x9"
                     onClick={handleAddWaypoint}
                 >
+                    {waypointMarkers}
+                    {racerMarkers}
+                    {race}
                     <Source id="route" type="geojson" data={geojson}>
                         <Layer  {...layerStyle} />
                     </Source>

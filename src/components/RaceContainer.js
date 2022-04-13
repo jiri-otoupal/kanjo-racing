@@ -37,7 +37,7 @@ class RaceContainer extends React.Component {
             loadingJoin: false,
             joined: false
         };
-        this.changeCar = this.changeCar.bind(this);
+        this.changeVehicle = this.changeVehicle.bind(this);
         this.changeHeatLevel = this.changeHeatLevel.bind(this);
         this.changeLoadingSave = this.changeLoadingSave.bind(this);
         this.changeLoadingJoin = this.changeLoadingJoin.bind(this);
@@ -68,7 +68,7 @@ class RaceContainer extends React.Component {
         };
 
         console.log("Custom Data", customData);
-        callApi("http://localhost:80/backend/race.php", this.callbackJoin, customData)
+        callApi("http://localhost:80/backend/race.php", this.callbackJoin, customData);
     }
 
     callbackJoin(data) {
@@ -78,7 +78,7 @@ class RaceContainer extends React.Component {
             if (data["message"].includes("join")) {
                 op_stat = "Leave";
                 join_stat = true;
-            }else{
+            } else {
                 join_stat = false;
             }
 
@@ -86,7 +86,7 @@ class RaceContainer extends React.Component {
             op_stat = this.state.race_op;
             join_stat = this.state.joined;
         }
-        console.log("Setting State",op_stat);
+        console.log("Setting State", op_stat);
 
         this.setState({
             loadingJoin: false,
@@ -95,7 +95,7 @@ class RaceContainer extends React.Component {
         });
     }
 
-    changeCar(event) {
+    changeVehicle(event) {
         console.log(event);
         this.setState({
             car: event.target.value
@@ -176,9 +176,9 @@ class RaceContainer extends React.Component {
                           });
                       }}>
                     <input name={"latitude"} type={"text"} hidden readOnly
-                           value={_waypoints.length ? _waypoints[0].lat : 30}/>
+                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lat : 30}/>
                     <input name={"longitude"} type={"text"} hidden readOnly
-                           value={_waypoints.length ? _waypoints[0].lng : 30}/>
+                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lng : 30}/>
                     <input name={"chat_link"} type={"text"} hidden readOnly value={""}/>
                     <input name={"race_id"} type={"text"} hidden readOnly value={this.race["race_id"]}/>
                     <input name={"session_id"} type={"text"} hidden readOnly value={getCookie("session_id")}/>
@@ -229,15 +229,15 @@ class RaceContainer extends React.Component {
                         </Select>
                     </FormControl>
 
-                    <FormControl fullWidth>
-                        <InputLabel id="select-car">Car</InputLabel>
+                    <FormControl fullWidth style={{marginTop: "12px"}}>
+                        <InputLabel id="select-vehicle">Vehicle</InputLabel>
                         <Select
-                            labelId="car-select"
+                            labelId="vehicle-select"
                             id="car-select"
                             name={"car_id"}
                             value={this.state.car}
-                            label="Car"
-                            onChange={this.changeCar}
+                            label="Vehicle"
+                            onChange={this.changeVehicle}
                         >
                             {car_items}
                         </Select>

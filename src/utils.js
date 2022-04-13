@@ -63,7 +63,11 @@ export const callApi = (url, callback, custom_data = {}) => {
 
 export const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
     let value = Object.values(__waypoints);
-    let waypoint_pairs = value.map(object => object.lng + "," + object.lat);
+    let waypoint_pairs=null;
+    if(__waypoints[0].lng!=null&&__waypoints[0].lat!=null)
+        waypoint_pairs = value.map(object => object.lng + "," + object.lat);
+    else
+        waypoint_pairs = value.map(object => object.longitude + "," + object.latitude);
     const waypoints = waypoint_pairs.join(";");
     return "https://api.mapbox.com/directions/v5/mapbox/driving/" + waypoints + "?steps=true&geometries=geojson&access_token=" + access_token;
 }
