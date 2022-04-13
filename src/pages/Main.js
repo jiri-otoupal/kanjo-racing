@@ -350,7 +350,7 @@ const Main = () => {
     }
 
     const race = React.createElement(RacePane, {
-            race: {race_id: 23},
+            race: {race_id: 23,start_time:"2022-04-13 19:03:00"},
             mapUpdate: callbackMapRacers,
             drawRoute: callbackDrawRaceRoute,
             drawWaypoints: callbackMapWaypoints,

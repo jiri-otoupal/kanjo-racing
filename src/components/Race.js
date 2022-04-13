@@ -25,15 +25,17 @@ export class Race extends React.Component {
         this.startLocationWatch = this.startLocationWatch.bind(this);
         this.startRace = this.startRace.bind(this);
         this.generateGateMarkers = this.generateGateMarkers.bind(this);
+        this.refreshTime = this.refreshTime.bind(this);
         this.racers_pos = [];
+        this.race = props["race"];
 
+        const remainingSec = (new Date(this.race["start_time"]) - new Date()) / 1000;
         this.state = {
             ready: false,
             racers_pos: [],
-            displayCounter: true
+            displayCounter: true,
+            remainingSeconds:remainingSec
         };
-
-        this.race = props["race"];
 
 
         callApi("http://localhost:80/backend/race.php", this.callbackWaypoints, {
@@ -110,6 +112,7 @@ export class Race extends React.Component {
     }
 
     handleReady(event) {
+        this.refreshTime();
         this.setState({
             ready: event.target.checked,
             displayCounter: event.target.checked
@@ -205,23 +208,42 @@ export class Race extends React.Component {
         return this.state;
     }
 
+    refreshTime() {
+        this.setState({remainingSeconds: (new Date(this.race["start_time"]) - new Date()) / 1000})
+    }
+
+
     render() {
         const renderTime = ({remainingTime}) => {
-
+            const hours = Math.floor(remainingTime / 3600)
+            const minutes = Math.floor((remainingTime % 3600) / 60)
+            const seconds = remainingTime % 60
 
             const isTimeUp = remainingTime === 0;
             if (isTimeUp && this.state.displayCounter)
                 this.startRace();
 
+            let format = `${hours}:${minutes}:${seconds}`;
+            let fSize = "2rem";
+            if (remainingTime < 60) {
+                format = remainingTime;
+                fSize = "7rem";
+            } else if (hours === 0)
+                format = `${minutes}:${seconds}`;
+
             return (
                 <div className="time-wrapper">
-                    <div key={remainingTime} className={`time`}>
-                        {isTimeUp ? "GO" : remainingTime}
+                    <div key={remainingTime} className={`time`} style={{fontSize: `${fSize}`}}>
+                        {isTimeUp ? "GO" : format}
                     </div>
 
                 </div>
             );
         };
+
+
+
+
 
         const leaderboard = React.createElement(Leaderboard, {
             waypoints: this.waypoints,
@@ -239,6 +261,9 @@ export class Race extends React.Component {
             backgroundSize: "contain"
         }}/>;
 
+        console.log("Time", this.race, new Date(this.race["start_time"]))
+
+
         return <div>
             {this.state.ready ? leaderboard : null}
 
@@ -247,7 +272,7 @@ export class Race extends React.Component {
                 <CountdownCircleTimer
                     isPlaying={this.state.displayCounter && this.state.ready}
                     size={200}
-                    duration={7}
+                    duration={this.state.remainingSeconds}
                     colors={['#00b308', '#d0ff00', '#d29700', '#A30000']}
                     colorsTime={[7, 5, 2, 0]}
                 >
