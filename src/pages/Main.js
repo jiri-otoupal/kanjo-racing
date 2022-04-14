@@ -303,8 +303,13 @@ const Main = () => {
             setCarsExist(false);
         } else {
             let tmp = [];
-            for (let i = 0; i < data["cars"].length; i++)
-                tmp.push(generateCarRow(data["cars"][i]));
+
+            if (Object.keys(races).includes("id")) {
+                tmp.push(generateCarRow(data["cars"]));
+            } else {
+                for (let i = 0; i < data["cars"].length; i++)
+                    tmp.push(generateCarRow(data["cars"][i]));
+            }
 
             tmp_cars.current = tmp;
             setCars(tmp_cars.current);
@@ -355,12 +360,13 @@ const Main = () => {
     }
 
     function callbackSetClosestRace(data) {
-        if (data.length === 0 || data["races"] == null) {
+        const races = data["races"];
+        if (races == null) {
             console.log("No races");
             return;
         }
         const race = React.createElement(RacePane, {
-                race: data["races"][0],
+                race: (Object.keys(races) == null ? races[0] : races),
                 mapUpdate: callbackMapRacers,
                 drawRoute: callbackDrawRaceRoute,
                 drawWaypoints: callbackMapWaypoints,
@@ -368,7 +374,7 @@ const Main = () => {
             }
         );
         setRacePane(race);
-        console.log("Setted race pane", data["races"][0]);
+        console.log("Setted race pane", races);
     }
 
     if (racePane == null)
@@ -378,7 +384,7 @@ const Main = () => {
         });
 
 
-    function generateRaceRow(race, i) {
+    function generateRaceRow(race) {
         const raceContainer = React.createElement(RaceContainer, {
             r: race, h: handleSaveRace,
             u: updateRaceOnChangeCallback, d: deleteRace, c: callbackEditMode, cars: cars_ref
@@ -399,8 +405,8 @@ const Main = () => {
 
         setLoadedRaces(true);
 
-        const races_d = data["races"];
-        for (const [i, race] of (Object.keys(races_d).includes("race_id") ? Object.entries([races_d]) : Object.entries(races_d))) {
+        const races = data["races"];
+        for (const [i, race] of (Object.keys(races).includes("race_id") ? Object.entries([races]) : Object.entries(races))) {
             console.log("Race", i, race);
             if (!race.hasOwnProperty("waypoints_np") || race["waypoints_np"] == null)
                 continue;
@@ -411,7 +417,7 @@ const Main = () => {
                 const waypoint_tmp = waypoint.split(",");
                 waypoint_arr.push({step: waypoint_tmp[0], lat: waypoint_tmp[1], lng: waypoint_tmp[2]});
             });
-            Object.assign(race,{waypoints: waypoint_arr});
+            Object.assign(race, {waypoints: waypoint_arr});
             //data["races"][i]["waypoints"] = waypoints;
         }
 
@@ -419,12 +425,14 @@ const Main = () => {
 
 
         let tmp = [];
-        const races = data["races"];
         races_storage.current = races;
 
-        for (let i = 0; i < races.length; i++)
-            tmp.push(generateRaceRow(races[i], i));
-
+        if (Object.keys(races).includes("race_id")) {
+            tmp.push(generateRaceRow(races));
+        } else {
+            for (let i = 0; i < races.length; i++)
+                tmp.push(generateRaceRow(races[i]));
+        }
         tmp_races.current = tmp;
         setRaces(tmp_races.current); //TODO: maybe better to use ref
     }

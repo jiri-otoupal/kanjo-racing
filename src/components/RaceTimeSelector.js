@@ -27,6 +27,7 @@ export class RaceTimeSelector extends React.Component {
         return (
             <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DateTimePicker
+                    inputFormat={"yyyy/MM/dd HH:mm:ss"}
                     value={this.state.raceTime}
                     onChange={this.changeDate}
                     disabled={!this.owner}

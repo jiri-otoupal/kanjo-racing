@@ -87,7 +87,7 @@ export class Race extends React.Component {
         } else {
 
             const callback = this.callbackLocationUpdate;
-            callApi("/backend/tracking.php", callback, {
+            callApi("http://3.70.2.118/backend/tracking.php", callback, {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude,
                 race_id: this.race.race_id
@@ -207,7 +207,7 @@ export class Race extends React.Component {
     }
 
     refreshTime() {
-        this.setState({remainingSeconds: (new Date(this.race["start_time"]) - new Date()) / 1000})
+        this.setState({remainingSeconds: new Date() - (new Date(this.race["start_time"])) / 1000})
     }
 
 
