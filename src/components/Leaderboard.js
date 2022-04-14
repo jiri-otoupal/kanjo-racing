@@ -44,7 +44,7 @@ class Leaderboard extends React.Component {
                 field: 'percent',
                 headerName: '%',
                 editable: false,
-                width: 15
+                width: 20
             },
         ];
 

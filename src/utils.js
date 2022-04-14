@@ -53,7 +53,7 @@ export const getCookie = (cname) => {
 export const callApi = (url, callback, custom_data = {}) => {
     $.ajax({
         type: "POST",
-        url: url,
+        url: "http://" + window.location.hostname + "" + url,
         data: Object.assign({session_id: getCookie("session_id")}, custom_data),
         success(data) {
             callback(data);
@@ -63,8 +63,8 @@ export const callApi = (url, callback, custom_data = {}) => {
 
 export const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
     let value = Object.values(__waypoints);
-    let waypoint_pairs=null;
-    if(__waypoints[0].lng!=null&&__waypoints[0].lat!=null)
+    let waypoint_pairs = null;
+    if (__waypoints[0].lng != null && __waypoints[0].lat != null)
         waypoint_pairs = value.map(object => object.lng + "," + object.lat);
     else
         waypoint_pairs = value.map(object => object.longitude + "," + object.latitude);

@@ -12,6 +12,9 @@ import WaypointSound from "./../resources/audio/waypoint.wav";
 export class Race extends React.Component {
     constructor(props) {
         super(props);
+        if (props.race == null)
+            return;
+
         this.alerted = false;
         this.callbackWaypoints = this.callbackWaypoints.bind(this);
         this.update = this.update.bind(this);
@@ -19,7 +22,6 @@ export class Race extends React.Component {
         this.callbackLocationUpdate = this.callbackLocationUpdate.bind(this);
         this.stopLocationWatch = this.stopLocationWatch.bind(this);
         this.render = this.render.bind(this);
-        this.getState = this.getState.bind(this);
         this.generateRacerMarkers = this.generateRacerMarkers.bind(this);
         this.handleReady = this.handleReady.bind(this);
         this.startLocationWatch = this.startLocationWatch.bind(this);
@@ -34,11 +36,11 @@ export class Race extends React.Component {
             ready: false,
             racers_pos: [],
             displayCounter: true,
-            remainingSeconds:remainingSec
+            remainingSeconds: remainingSec
         };
 
 
-        callApi("http://localhost:80/backend/race.php", this.callbackWaypoints, {
+        callApi("/backend/race.php", this.callbackWaypoints, {
             op: "get_waypoints",
             race_id: this.race.race_id
         });
@@ -85,7 +87,7 @@ export class Race extends React.Component {
         } else {
 
             const callback = this.callbackLocationUpdate;
-            callApi("http://localhost:80/backend/tracking.php", callback, {
+            callApi("/backend/tracking.php", callback, {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude,
                 race_id: this.race.race_id
@@ -204,16 +206,14 @@ export class Race extends React.Component {
 
     }
 
-    getState() {
-        return this.state;
-    }
-
     refreshTime() {
         this.setState({remainingSeconds: (new Date(this.race["start_time"]) - new Date()) / 1000})
     }
 
 
     render() {
+        if (this.state == null)
+            return null;
         const renderTime = ({remainingTime}) => {
             const hours = Math.floor(remainingTime / 3600)
             const minutes = Math.floor((remainingTime % 3600) / 60)
@@ -223,13 +223,13 @@ export class Race extends React.Component {
             if (isTimeUp && this.state.displayCounter)
                 this.startRace();
 
-            let format = `${hours}:${minutes}:${seconds}`;
+            let format = `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
             let fSize = "2rem";
             if (remainingTime < 60) {
                 format = remainingTime;
                 fSize = "7rem";
             } else if (hours === 0)
-                format = `${minutes}:${seconds}`;
+                format = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
             return (
                 <div className="time-wrapper">
@@ -242,12 +242,10 @@ export class Race extends React.Component {
         };
 
 
-
-
-
         const leaderboard = React.createElement(Leaderboard, {
             waypoints: this.waypoints,
-            racers: this.state.racers_pos
+            racers: this.state.racers_pos,
+            race: this.race
         });
         const readyBg = "rgb(0,0,0,0.8)";
 

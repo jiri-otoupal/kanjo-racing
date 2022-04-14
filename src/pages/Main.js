@@ -23,7 +23,6 @@ import {
     Circle,
     Delete as DeleteIcon,
     DeleteOutlined,
-    DirectionsCar,
     Flag as Race,
     FlagCircle,
     Garage,
@@ -48,6 +47,8 @@ import RaceContainer from "../components/RaceContainer";
 import PopupData from "../classes/PopupData";
 import geoJsonTemplate from "../templates/GeoJsonTemplate";
 import {Race as RacePane} from "../components/Race";
+import mapboxgl from "mapbox-gl";
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 
 const Main = () => {
@@ -65,6 +66,7 @@ const Main = () => {
     const [markers, setMarkers] = useState([]);
     const [racerMarkers, setRacerMarkers] = useState([]);
     const [waypointMarkers, setWaypointMarkers] = useState([]);
+    const [racePane, setRacePane] = useState(null);
 
     const [coords, setCoords] = useState({});
     const [latitude, setLatitude] = useState(0);
@@ -87,6 +89,9 @@ const Main = () => {
     const [mapControls, setMapControls] = useState(null);
     const [cars, setCars] = useState(null);
     const [races, setRaces] = useState(null);
+
+    // eslint-disable-next-line import/no-webpack-loader-syntax
+    mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default;
 
     const layerStyle = {
         id: 'track',
@@ -168,7 +173,7 @@ const Main = () => {
         // (D) UPDATE CURRENT LOCATION TO SERVER
         update: (pos) => {
 
-            callApi("http://localhost:80/backend/tracking.php", track.callback, {
+            callApi("/backend/tracking.php", track.callback, {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude
             });
@@ -192,13 +197,13 @@ const Main = () => {
 
 
     function deleteCar(car_id) {
-        callApi("http://localhost:80/backend/car.php", handleCarsUpdate, {delete: true, car_id: car_id});
+        callApi("/backend/car.php", handleCarsUpdate, {delete: true, car_id: car_id});
     }
 
     function updateCarOnChangeCallback(data) {
         if (data["status"] === "OK") {
             console.log("Calling Update Cars");
-            callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
+            callApi("/backend/car.php", handleCarsUpdate);
         }
     }
 
@@ -226,7 +231,7 @@ const Main = () => {
 
             }}>
                 <div style={{marginTop: "12px", marginBottom: "12px"}}>
-                    <form action="http://localhost:80/backend/car.php"
+                    <form action={"http://" + window.location.hostname + "/backend/car.php"}
                           method="post"
                           onSubmit={(event) => {
                               handleSaveCar(event, updateCarOnChangeCallback);
@@ -311,12 +316,12 @@ const Main = () => {
     function updateRaceOnChangeCallback(data) {
         if (data["status"] === "OK") {
             console.log("Calling Update Races");
-            callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
+            callApi("/backend/race.php", handleRacesUpdate);
         }
     }
 
     function deleteRace(id) {
-        callApi("http://localhost:80/backend/race.php", handleRacesUpdate, {delete: true, race_id: id});
+        callApi("/backend/race.php", handleRacesUpdate, {delete: true, race_id: id});
     }
 
     function callbackEditMode(_waypoints) {
@@ -344,19 +349,34 @@ const Main = () => {
     function callbackDrawRaceRoute(coords) {
         if (coords.length >= 1) {
             const url = getInterpolatedPathRequestFromWaypoints(coords);
-            renderRoute(url,false).then(r => function () {
+            renderRoute(url, false).then(r => function () {
             });
         }
     }
 
-    const race = React.createElement(RacePane, {
-            race: {race_id: 23,start_time:"2022-04-13 19:03:00"},
-            mapUpdate: callbackMapRacers,
-            drawRoute: callbackDrawRaceRoute,
-            drawWaypoints: callbackMapWaypoints,
-            setMapLocation: setCoords
+    function callbackSetClosestRace(data) {
+        if (data.length === 0 || data["races"] == null) {
+            console.log("No races");
+            return;
         }
-    );
+        const race = React.createElement(RacePane, {
+                race: data["races"][0],
+                mapUpdate: callbackMapRacers,
+                drawRoute: callbackDrawRaceRoute,
+                drawWaypoints: callbackMapWaypoints,
+                setMapLocation: setCoords
+            }
+        );
+        setRacePane(race);
+        console.log("Setted race pane", data["races"][0]);
+    }
+
+    if (racePane == null)
+        callApi("/backend/race.php", callbackSetClosestRace, {
+            op: "get_joined",
+            user_id: getCookie("user_id")
+        });
+
 
     function generateRaceRow(race, i) {
         const raceContainer = React.createElement(RaceContainer, {
@@ -376,7 +396,27 @@ const Main = () => {
             return;
         }
 
+
         setLoadedRaces(true);
+
+        const races_d = data["races"];
+        for (const [i, race] of (Object.keys(races_d).includes("race_id") ? Object.entries([races_d]) : Object.entries(races_d))) {
+            console.log("Race", i, race);
+            if (!race.hasOwnProperty("waypoints_np") || race["waypoints_np"] == null)
+                continue;
+
+            let waypoint_arr = [];
+            const waypoints_tmp = race["waypoints_np"].split(";");
+            waypoints_tmp.forEach(waypoint => {
+                const waypoint_tmp = waypoint.split(",");
+                waypoint_arr.push({step: waypoint_tmp[0], lat: waypoint_tmp[1], lng: waypoint_tmp[2]});
+            });
+            Object.assign(race,{waypoints: waypoint_arr});
+            //data["races"][i]["waypoints"] = waypoints;
+        }
+
+        console.log("Handle Races update", data["races"]);
+
 
         let tmp = [];
         const races = data["races"];
@@ -390,16 +430,16 @@ const Main = () => {
     }
 
     if (!loadedProfile)
-        callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
+        callApi("/backend/profile.php", handleProfileUpdate);
 
     if (!loadedCars)
-        callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
+        callApi("/backend/car.php", handleCarsUpdate);
 
     if (!loadedRaces)
-        callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
+        callApi("/backend/race.php", handleRacesUpdate);
 
 
-//callApi("http://localhost/backend/race.php", function () {
+//callApi("/backend/race.php", function () {
 //                 }, {race_id: 1, waypoints: waypoints.current});
 
     const mapControl = (
@@ -452,7 +492,7 @@ const Main = () => {
 
     const profile_menu = (
         <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
-            <form action="http://localhost:80/backend/profile.php"
+            <form action={"http://" + window.location.hostname + "/backend/profile.php"}
                   method="post"
                   onSubmit={(event) => {
                       handleSubmit(event);
@@ -641,13 +681,10 @@ const Main = () => {
                 >
                     {waypointMarkers}
                     {racerMarkers}
-                    {race}
+                    {racePane}
                     <Source id="route" type="geojson" data={geojson}>
                         <Layer  {...layerStyle} />
                     </Source>
-                    <Marker longitude={longitude} latitude={latitude}>
-                        <DirectionsCar/>
-                    </Marker>
 
                     {markers}
 
@@ -718,15 +755,15 @@ const Main = () => {
                             }
 
                             if (newValue === 1) {
-                                callApi("http://localhost:80/backend/profile.php", handleProfileUpdate);
+                                callApi("/backend/profile.php", handleProfileUpdate);
                                 setBoxContent("profile");
                                 setBlockAddCar(false);
                             } else if (newValue === 2) {
                                 tmp_cars.current = [];
-                                callApi("http://localhost:80/backend/car.php", handleCarsUpdate);
+                                callApi("/backend/car.php", handleCarsUpdate);
                                 setBoxContent("cars");
                             } else if (newValue === 3) {
-                                callApi("http://localhost:80/backend/race.php", handleRacesUpdate);
+                                callApi("/backend/race.php", handleRacesUpdate);
                                 setBoxContent("races");
                                 setBlockAddCar(false);
                             }

@@ -11,7 +11,7 @@ const Register = () => {
     const [loadingState, setLoading] = useState(false);
 
     const registration_form = <form
-        action="http://localhost:80/backend/register.php"
+        action={"http://" + window.location.hostname + "/backend/register.php"}
         method="post"
         onSubmit={(event) => {
             handleSubmit(event, callback);

@@ -7,7 +7,7 @@ import {useState} from "react";
 
 
 const Sign_in = () => {
-    const [ alerted,setAlerted] = useState(false);
+    const [alerted, setAlerted] = useState(false);
     const [alert, setAlert] = useState(false);
 
     const [loadingState, setLoading] = useState(false);
@@ -17,10 +17,10 @@ const Sign_in = () => {
 
 
     let history = useHistory();
-
+    const port = window.location.hostname.includes("localhost") ? "9000" : "";
 
     const login_form = <form
-        action="http://localhost:80/backend/login.php"
+        action={"http://" + window.location.hostname + port + "/backend/login.php"}
         method="post"
         onSubmit={(event) => {
             handleSubmit(event, callback);
@@ -61,7 +61,7 @@ const Sign_in = () => {
     function callback(obj) {
         if (obj["status"] === "OK") {
             setCookie("session_id", obj["cookie"], 30);
-            setCookie("user_id",obj["user_id"],30);
+            setCookie("user_id", obj["user_id"], 30);
             setAlert(null);
             history.push("/main");
         } else {

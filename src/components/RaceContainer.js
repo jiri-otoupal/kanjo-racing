@@ -68,7 +68,7 @@ class RaceContainer extends React.Component {
         };
 
         console.log("Custom Data", customData);
-        callApi("http://localhost:80/backend/race.php", this.callbackJoin, customData);
+        callApi("/backend/race.php", this.callbackJoin, customData);
     }
 
     callbackJoin(data) {
@@ -164,7 +164,7 @@ class RaceContainer extends React.Component {
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
             <div key={"race_div" + this.race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
-                <form action="http://localhost:80/backend/race.php"
+                <form action={"http://" + window.location.hostname + "/backend/race.php"}
                       method="post"
                       onSubmit={(event) => {
                           handleSaveRace(event, function (data) {
@@ -234,6 +234,7 @@ class RaceContainer extends React.Component {
                         <Select
                             labelId="vehicle-select"
                             id="car-select"
+                            defaultValue={0}
                             name={"car_id"}
                             value={this.state.car}
                             label="Vehicle"
