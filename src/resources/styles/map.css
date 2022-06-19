@@ -18,6 +18,21 @@
     position: absolute;
     right: 0;
 }
+#center-pos{
+    position: absolute;
+    left: 20px;
+    font-size: 1.8rem;
+    bottom: 80px;
+    color: #333333;
+}
+
+#center-pos-up{
+    position: absolute;
+    font-size: 1.8rem;
+    left: 20px;
+    bottom: 140px;
+    color: #333333;
+}
 
 
 .timer-wrapper {

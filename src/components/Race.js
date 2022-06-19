@@ -59,6 +59,7 @@ export class Race extends React.Component {
     }
 
     generateRacerMarkers(racers) {
+
         let markers = [];
 
         racers.forEach(racer => {
@@ -73,8 +74,8 @@ export class Race extends React.Component {
     generateGateMarkers(route_waypoints) {
         let markers = [];
 
-        route_waypoints.forEach(racer => {
-            markers.push(<Marker longitude={racer.longitude} latitude={racer.latitude}>
+        route_waypoints.forEach(waypoint => {
+            markers.push(<Marker longitude={waypoint.longitude} latitude={waypoint.latitude}>
                 <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
             </Marker>);
         });
@@ -87,7 +88,7 @@ export class Race extends React.Component {
         } else {
 
             const callback = this.callbackLocationUpdate;
-            callApi("http://3.70.2.118/backend/tracking.php", callback, {
+            callApi("/backend/tracking.php", callback, {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude,
                 race_id: this.race.race_id
@@ -120,10 +121,17 @@ export class Race extends React.Component {
             displayCounter: event.target.checked
         });
 
-        if (event.target.checked)
+        if (event.target.checked) {
             this.startLocationWatch();
-        else
+
+        } else {
+            this.props.drawWaypoints(null);
+            this.props.setMapLocation(null);
+
+            this.props.drawRoute(null);
+            this.props.mapUpdate(null);
             this.stopLocationWatch();
+        }
     }
 
     callbackWaypoints(data) {
@@ -151,8 +159,11 @@ export class Race extends React.Component {
                 });
             }
         }
+        if (Object.keys(data["racers"]).includes("user_id"))
+            this.racers = [data["racers"]];
+        else
+            this.racers = data["racers"];
 
-        this.racers = data["racers"];
         let tmp_racers = [];
         const browser_user_id = getCookie("user_id");
 
@@ -195,19 +206,19 @@ export class Race extends React.Component {
                 route_waypoints.splice(i, 1);
 
         const currentLocation = {latitude: this.racer["latitude"], longitude: this.racer["longitude"], zoom: 17};
+        route_waypoints.unshift(currentLocation);
 
         this.props.drawWaypoints(this.generateGateMarkers(route_waypoints));
         this.props.setMapLocation(currentLocation);
 
-        route_waypoints.unshift(currentLocation);
-
         this.props.drawRoute(route_waypoints);
-        this.props.mapUpdate(this.generateRacerMarkers(this.racers));
+        this.props.mapUpdate(this.generateRacerMarkers(tmp_racers));
 
     }
 
     refreshTime() {
-        this.setState({remainingSeconds: new Date() - (new Date(this.race["start_time"])) / 1000})
+        let timeToRace = (new Date(this.race["start_time"]) - new Date()) / 1000;
+        this.setState({remainingSeconds: timeToRace})
     }
 
 
@@ -259,7 +270,7 @@ export class Race extends React.Component {
             backgroundSize: "contain"
         }}/>;
 
-        console.log("Time", this.race, new Date(this.race["start_time"]))
+        console.log("Time", new Date(this.race["start_time"]));
 
 
         return <div>
@@ -281,7 +292,7 @@ export class Race extends React.Component {
                 label="Ready" style={{
                 position: "absolute",
                 right: 0,
-                bottom: 70,
+                bottom: "10%",
                 color: "#f8f8f8",
                 borderRadius: "12px",
                 paddingRight: "12px",
@@ -290,8 +301,7 @@ export class Race extends React.Component {
                 backgroundColor: this.state.ready ? "rgb(0,0,0,0.75)" : readyBg
             }}
                 control={<Checkbox variant={this.state.ready ? "contained" : "outlined"} color="error" size={"large"}
-                                   onChange={this.handleReady}
-                >
+                                   onChange={this.handleReady}>
                     {this.state.ready ? <Check/> : <Clear/>}Ready
                 </Checkbox>}/>
 

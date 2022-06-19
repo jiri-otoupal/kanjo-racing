@@ -5,13 +5,14 @@ import {Link} from "react-router-dom";
 import darkTheme from "../themes/DarkTheme";
 import {useState} from "react";
 import LoadingButton from '@mui/lab/LoadingButton';
+import {pre_url} from "../config";
 
 const Register = () => {
 
     const [loadingState, setLoading] = useState(false);
 
     const registration_form = <form
-        action={"http://" + window.location.hostname + "/backend/register.php"}
+        action={pre_url  + window.location.hostname + "/backend/register.php"}
         method="post"
         onSubmit={(event) => {
             handleSubmit(event, callback);

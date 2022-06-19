@@ -5,7 +5,6 @@ import {
     BottomNavigation,
     BottomNavigationAction,
     Button,
-    Checkbox,
     Container,
     Fab,
     Grid,
@@ -25,10 +24,9 @@ import {
     DeleteOutlined,
     Flag as Race,
     FlagCircle,
-    Garage,
-    Map as MapIcon,
+    Garage, LocationOn, Map as MapIcon, MyLocation,
     Person as ProfileIcon,
-    PhotoCamera,
+    PhotoCamera, RefreshRounded,
     Report,
     StartRounded
 } from "@mui/icons-material";
@@ -41,7 +39,7 @@ import {
     handleSubmit
 } from "../utils";
 import SampleCar from "./../resources/images/sample_car.png";
-import {access_token} from "../config";
+import {access_token, pre_url} from "../config";
 import {fabStyle, Input} from "../components/styles/main";
 import RaceContainer from "../components/RaceContainer";
 import PopupData from "../classes/PopupData";
@@ -144,56 +142,24 @@ const Main = () => {
 
 
     let track = {
-        // (B) PROPERTIES & SETTINGS
-        watchOptions: {
-            timeout: 10000,
-            maxAge: 0,
-            enableHighAccuracy: true
-        },
-
-        watchId: null, // Interval timer.
-        // (C) INIT
-        init: () => {
-            // (C2) CHECK GPS SUPPORT + START TRACKING
-            if (navigator.geolocation)
-                track.watchId = navigator.geolocation.watchPosition(track.update, track.handleError, track.watchOptions);
-
-        },
-
         just_once: () => {
-            if (navigator.geolocation)
+            if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(track.callback, track.handleError);
+
+            }
         },
 
         callback: (pos) => {
-            const coords1 = getCoords(pos.coords.latitude, pos.coords.longitude, 12);
+            const coords1 = getCoords(pos.coords.latitude, pos.coords.longitude, 14);
             setCoords(coords1);
+            setRacerMarkers([<Marker longitude={pos.coords.longitude} latitude={pos.coords.latitude}>
+                <LocationOn sx={{fontSize: '1.5rem'}} style={{color: "white"}}/>
+            </Marker>]);
         },
-
-        // (D) UPDATE CURRENT LOCATION TO SERVER
-        update: (pos) => {
-
-            callApi("/backend/tracking.php", track.callback, {
-                latitude: pos.coords.latitude,
-                longitude: pos.coords.longitude
-            });
-
-            if (latitude == 0) {
-                setLatitude(pos.coords.latitude);
-                setLongitude(pos.coords.longitude);
-            }
-
-        },
-
         handleError: (error) => {
             console.log(error);
         }
     };
-
-
-    //track.just_once();
-
-    //track.init(); // Enables Tracking to DB
 
 
     function deleteCar(car_id) {
@@ -231,7 +197,7 @@ const Main = () => {
 
             }}>
                 <div style={{marginTop: "12px", marginBottom: "12px"}}>
-                    <form action={"http://" + window.location.hostname + "/backend/car.php"}
+                    <form action={pre_url + window.location.hostname + "/backend/car.php"}
                           method="post"
                           onSubmit={(event) => {
                               handleSaveCar(event, updateCarOnChangeCallback);
@@ -322,6 +288,7 @@ const Main = () => {
         if (data["status"] === "OK") {
             console.log("Calling Update Races");
             callApi("/backend/race.php", handleRacesUpdate);
+            callApi("/backend/car.php", handleCarsUpdate);
         }
     }
 
@@ -352,6 +319,8 @@ const Main = () => {
     }
 
     function callbackDrawRaceRoute(coords) {
+        if (coords == null)
+            setGeoJson({});
         if (coords.length >= 1) {
             const url = getInterpolatedPathRequestFromWaypoints(coords);
             renderRoute(url, false).then(r => function () {
@@ -365,8 +334,9 @@ const Main = () => {
             console.log("No races");
             return;
         }
+        console.log("races", races);
         const race = React.createElement(RacePane, {
-                race: (Object.keys(races) == null ? races[0] : races),
+                race: (!Object.keys(races).includes("race_id") ? races[0] : races),
                 mapUpdate: callbackMapRacers,
                 drawRoute: callbackDrawRaceRoute,
                 drawWaypoints: callbackMapWaypoints,
@@ -500,7 +470,7 @@ const Main = () => {
 
     const profile_menu = (
         <Container maxWidth={"sm"} style={{backgroundColor: "#222222", borderRadius: "10px"}}>
-            <form action={"http://" + window.location.hostname + "/backend/profile.php"}
+            <form action={pre_url + window.location.hostname + "/backend/profile.php"}
                   method="post"
                   onSubmit={(event) => {
                       handleSubmit(event);
@@ -665,10 +635,15 @@ const Main = () => {
         </div>);
 
 
+    function updateRaces() {
+        updateRaceOnChangeCallback();
+        //TODO: append markers with races location
+    }
+
     return (
         <ThemeProvider theme={darkTheme}>
 
-            <div>
+            <div style={{display: "flex"}}>
                 <Map
                     initialViewState={{
                         longitude: 14,
@@ -689,7 +664,8 @@ const Main = () => {
                 >
                     {waypointMarkers}
                     {racerMarkers}
-                    {racePane}
+
+                    {bottomNavVal === 0 ? racePane : null}
                     <Source id="route" type="geojson" data={geojson}>
                         <Layer  {...layerStyle} />
                     </Source>
@@ -709,83 +685,86 @@ const Main = () => {
                     )}
 
                     {distance != null ? distanceInfo : null}
-
-                    <Slide direction="up" in={checked} container={containerRef.current}>
-                        <Paper sx={{
-                            overflowX: "hidden",
-                            maxHeight: "90vh",
-                            overflowY: "auto",
-                            position: "fixed",
-                            width: "100%",
-                            height: "100%",
-                            backgroundColor: "#111111",
-                            display: "flex",
-                            alignItems: "center",
-                            alignContent: "center",
-                            justifyItems: "center",
-                            justifyContent: "center"
-                        }} elevation={0}>
-                            {boxContent === "profile" ? profile_menu : boxContent === "cars" ? cars_menu : races_menu}
-                        </Paper>
-                    </Slide>
-
-                    <IconButton aria-label={"Report"} id={"report-pos"}><Report/></IconButton>
-
-                    {mapControls}
-                    <BottomNavigation
-                        size={"large"}
-                        sx={{
-                            bgcolor: '#333333',
-                            '& .Mui-selected': {
-                                '& .MuiBottomNavigationAction-label': {
-                                    fontSize: theme => theme.typography.caption,
-                                    transition: 'none',
-                                    fontWeight: 'bold',
-                                    lineHeight: '20px'
-                                },
-                                '& .MuiSvgIcon-root, & .MuiBottomNavigationAction-label': {
-                                    color: "#333333"
-                                }
-                            }
-                        }}
-                        className={"map-nav-bar"}
-                        showLabels
-                        value={bottomNavVal}
-                        onChange={(event, newValue) => {
-                            setMapControls(null);
-                            setNavVal(newValue);
-                            if (newValue !== 0) {
-                                clearWaypoints();
-                                setChecked(true);
-                                setDistance(null);
-                            } else {
-                                setChecked(false);
-                            }
-
-                            if (newValue === 1) {
-                                callApi("/backend/profile.php", handleProfileUpdate);
-                                setBoxContent("profile");
-                                setBlockAddCar(false);
-                            } else if (newValue === 2) {
-                                tmp_cars.current = [];
-                                callApi("/backend/car.php", handleCarsUpdate);
-                                setBoxContent("cars");
-                            } else if (newValue === 3) {
-                                callApi("/backend/race.php", handleRacesUpdate);
-                                setBoxContent("races");
-                                setBlockAddCar(false);
-                            }
-                        }}
-                    >
-                        <BottomNavigationAction label="Map" icon={<MapIcon/>}/>
-                        <BottomNavigationAction label="Profile" icon={<ProfileIcon/>}/>
-                        <BottomNavigationAction label="Garage" icon={<Garage/>}/>
-                        <BottomNavigationAction label="Races" icon={<Race/>}/>
-                    </BottomNavigation>
                 </Map>
+                <Slide direction="up" in={checked} container={containerRef.current}>
+                    <Paper sx={{
+                        overflowX: "hidden",
+                        overflowY: "auto",
+                        position: "fixed",
+                        width: "100%",
+                        height: "90%",
+                        backgroundColor: "#111111",
+                        display: "flex",
+                        alignItems: "center",
+                        alignContent: "center",
+                        justifyItems: "center",
+                        justifyContent: "center",
+                    }} elevation={0}>
+                        {boxContent === "profile" ? profile_menu : boxContent === "cars" ? cars_menu : races_menu}
+                    </Paper>
+                </Slide>
+
+                <IconButton aria-label={"Report"} id={"report-pos"}><Report/></IconButton>
+
+                {mapControls}
+                <IconButton size={"large"} style={{backgroundColor:"#f8f8f8"}} onClick={updateRaces} aria-label={"Center"}
+                            id={"center-pos-up"}><RefreshRounded/></IconButton>
+                <IconButton size={"large"} style={{backgroundColor:"#f8f8f8"}} onClick={track.just_once} aria-label={"Center"}
+                            id={"center-pos"}><MyLocation/></IconButton>
+                <BottomNavigation
+                    size={"large"}
+                    sx={{
+                        bgcolor: '#333333',
+                        '& .Mui-selected': {
+                            '& .MuiBottomNavigationAction-label': {
+                                fontSize: theme => theme.typography.caption,
+                                transition: 'none',
+                                fontWeight: 'bold',
+                                lineHeight: '20px'
+                            },
+                            '& .MuiSvgIcon-root, & .MuiBottomNavigationAction-label': {
+                                color: "#333333"
+                            }
+                        }
+                    }}
+                    className={"map-nav-bar"}
+                    showLabels
+                    value={bottomNavVal}
+                    onChange={(event, newValue) => {
+                        setMapControls(null);
+                        setNavVal(newValue);
+                        if (newValue !== 0) {
+                            clearWaypoints();
+                            setChecked(true);
+                            setDistance(null);
+                        } else {
+                            setChecked(false);
+                        }
+
+                        if (newValue === 1) {
+                            callApi("/backend/profile.php", handleProfileUpdate);
+                            setBoxContent("profile");
+                            setBlockAddCar(false);
+                        } else if (newValue === 2) {
+                            tmp_cars.current = [];
+                            callApi("/backend/car.php", handleCarsUpdate);
+                            setBoxContent("cars");
+                        } else if (newValue === 3) {
+                            callApi("/backend/race.php", handleRacesUpdate);
+                            setBoxContent("races");
+                            setBlockAddCar(false);
+                        }
+                    }}
+                >
+                    <BottomNavigationAction label="Map" icon={<MapIcon/>}/>
+                    <BottomNavigationAction label="Profile" icon={<ProfileIcon/>}/>
+                    <BottomNavigationAction label="Garage" icon={<Garage/>}/>
+                    <BottomNavigationAction label="Races" icon={<Race/>}/>
+                </BottomNavigation>
             </div>
         </ThemeProvider>
-    );
+    )
+        ;
 }
 
 

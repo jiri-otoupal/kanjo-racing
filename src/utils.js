@@ -1,5 +1,5 @@
 import $ from "jquery";
-import {access_token} from "./config";
+import {access_token, api_port, pre_url} from "./config";
 
 function formDataToJson(form) {
     let jsonObj = {};
@@ -53,7 +53,7 @@ export const getCookie = (cname) => {
 export const callApi = (url, callback, custom_data = {}) => {
     $.ajax({
         type: "POST",
-        url: "http://" + window.location.hostname + "" + url,
+        url: pre_url  + window.location.hostname + api_port + url,
         data: Object.assign({session_id: getCookie("session_id")}, custom_data),
         success(data) {
             callback(data);

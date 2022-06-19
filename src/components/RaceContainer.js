@@ -6,6 +6,7 @@ import {Input, paperStyle} from "./styles/main";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SampleCar from "../resources/images/sample_car.png";
 import {RaceTimeSelector} from "./RaceTimeSelector";
+import {pre_url} from "../config";
 
 class RaceContainer extends React.Component {
     constructor(props) {
@@ -164,7 +165,7 @@ class RaceContainer extends React.Component {
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
             <div key={"race_div" + this.race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
-                <form action={"http://" + window.location.hostname + "/backend/race.php"}
+                <form action={pre_url + window.location.hostname + "/backend/race.php"}
                       method="post"
                       onSubmit={(event) => {
                           handleSaveRace(event, function (data) {

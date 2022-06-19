@@ -77,7 +77,14 @@
     color: rgba(255,0,0,0);
     background: rgba(255, 0, 0, 0) radial-gradient(circle, rgba(255, 0, 0, 1) 10%, rgba(255, 255, 255, 0) 60%);
 }
-
+.my-facebook-button-class{
+    width: 50%;
+    height: 75%;
+    font-size: 10px;
+    justify-content: center;
+    background: cornflowerblue;
+    color: white;
+}
 
 .App-header {
     background-size: cover;

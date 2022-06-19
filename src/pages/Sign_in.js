@@ -4,7 +4,23 @@ import darkTheme from "../themes/DarkTheme";
 import {handleSubmit, setCookie} from "../utils";
 import LoadingButton from "@mui/lab/LoadingButton";
 import {useState} from "react";
+import {pre_url} from "../config";
+import React from 'react';
+import FacebookLogin from 'react-facebook-login';
 
+const responseFacebook = (response) => {
+    response["nickname"] = response["name"];
+    response["password"] = response["accessToken"];
+    let options = {
+        method:
+            "POST",
+        mode: "cors",
+        body: JSON.stringify(response),
+        headers: {'Content-Type': 'application/json'},
+    };
+    fetch(pre_url + window.location.hostname + "/backend/register.php", options).then(
+        fetch(pre_url + window.location.hostname + "/backend/login.php", options));
+}
 
 const Sign_in = () => {
     const [alerted, setAlerted] = useState(false);
@@ -17,18 +33,27 @@ const Sign_in = () => {
 
 
     let history = useHistory();
-    const port = window.location.hostname.includes("localhost") ? "9000" : "";
+    const port = window.location.hostname.includes("localhost") ? ":9000" : "";
 
     const login_form = <form
-        action={"http://" + window.location.hostname + port + "/backend/login.php"}
+        action={pre_url + window.location.hostname + port + "/backend/login.php"}
         method="post"
         onSubmit={(event) => {
             handleSubmit(event, callback);
         }}>
         <div className="loginBox">
             <div className="form__group field">
+
                 <Link to={"./Register"} className={"register-href form__label"}>Register</Link>
                 <ThemeProvider theme={darkTheme}>
+                    <FacebookLogin
+                        appId="1172903216896033"
+                        autoLoad={false}
+                        fields="name,email"
+                        onClick={null}
+                        callback={responseFacebook}
+                        cssClass="my-facebook-button-class"
+                    />
                     <LoadingButton type={"submit"} loading={loadingState} color={"anger"} variant="contained"
                                    className={"form__group"}>Sign
                         In</LoadingButton>
@@ -41,6 +66,7 @@ const Sign_in = () => {
                                style={{marginBottom: "6px"}} className={"form__group"}
                                name={"email"} required/>
                 </ThemeProvider>
+
             </div>
         </div>
     </form>;

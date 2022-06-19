@@ -11,6 +11,7 @@ export class RaceTimeSelector extends React.Component {
         this.state = {
             raceTime: race_data["start_time"]
         };
+        this.changeDate = this.changeDate.bind(this);
     }
 
     componentDidMount() {
