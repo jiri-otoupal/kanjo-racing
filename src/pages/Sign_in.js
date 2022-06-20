@@ -18,13 +18,21 @@ const responseFacebook = (response) => {
             email: response["email"],
             access_token: response["accessToken"],
         }),
-        headers: {'Content-Type': 'application/json', 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS'
-        ,"Access-Control-Allow-Headers":"X-Requested-With, Origin, Content-Type, X-CSRF-Token, Accept"},
+        headers: {
+            'Content-Type': 'application/json', 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS'
+            , "Access-Control-Allow-Headers": "X-Requested-With, Origin, Content-Type, X-CSRF-Token, Accept"
+        },
     };
 
 
     fetch(pre_url + window.location.hostname + "/backend/register.php", options).then(
-        fetch(pre_url + window.location.hostname + "/backend/login.php", options));
+        () => loginWithFacebook(response));
+}
+
+const loginWithFacebook = (response) => {
+    document.getElementById("access_token").value = response["accessToken"];
+    document.getElementById("email").value = response["email"];
+    document.getElementById("sign").submit();
 }
 
 const Sign_in = () => {
@@ -40,12 +48,12 @@ const Sign_in = () => {
     let history = useHistory();
     const port = window.location.hostname.includes("localhost") ? ":9000" : "";
 
-    const login_form = <form
-        action={pre_url + window.location.hostname + port + "/backend/login.php"}
-        method="post"
-        onSubmit={(event) => {
-            handleSubmit(event, callback);
-        }}>
+    const login_form = <form id="login-form"
+                             action={pre_url + window.location.hostname + port + "/backend/login.php"}
+                             method="post"
+                             onSubmit={(event) => {
+                                 handleSubmit(event, callback);
+                             }}>
         <div className="loginBox">
             <div className="form__group field">
 
@@ -59,17 +67,18 @@ const Sign_in = () => {
                         callback={responseFacebook}
                         cssClass="my-facebook-button-class"
                     />
-                    <LoadingButton type={"submit"} loading={loadingState} color={"anger"} variant="contained"
+                    <LoadingButton id="sign" type={"submit"} loading={loadingState} color={"anger"} variant="contained"
                                    className={"form__group"}>Sign
                         In</LoadingButton>
-                    <TextField id="outlined-basic" color={"textwhitish"} label="Password" variant="outlined"
+                    <TextField id="password" color={"textwhitish"} label="Password" variant="outlined"
                                style={{marginBottom: "6px"}}
                                type={"password"} className={"form__group"}
                                name={"password"} required/>
-                    <TextField id="outlined-basic" label="Email" variant="outlined" type={"email"}
+                    <TextField id="email" label="Email" variant="outlined" type={"email"}
                                color={"textwhitish"}
                                style={{marginBottom: "6px"}} className={"form__group"}
                                name={"email"} required/>
+                    <input name="access_token" type={"text"} value={""} hidden id="access_token"/>
                 </ThemeProvider>
 
             </div>

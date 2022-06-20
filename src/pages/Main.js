@@ -231,8 +231,7 @@ const Main = () => {
                             </label>
                             <label htmlFor="photo-camera" style={{alignSelf: "center"}}>
                                 <Input accept="image/*" id="photo-camera" type="file" name={"img_url_cam"}/>
-                                <IconButton color="primary" aria-label="upload picture" component="span">
-                                    <PhotoCamera/>
+                                <IconButton color="primary" aria-label="upload picture" component="span"><PhotoCamera/>
                                 </IconButton>
                             </label>
                             <LoadingButton type={"submit"} color={"anger"}
@@ -372,7 +371,7 @@ const Main = () => {
             return;
         }
 
-
+        setLoadedCars(false);
         setLoadedRaces(true);
 
         const races = data["races"];
@@ -707,9 +706,11 @@ const Main = () => {
                 <IconButton aria-label={"Report"} id={"report-pos"}><Report/></IconButton>
 
                 {mapControls}
-                <IconButton size={"large"} style={{backgroundColor:"#f8f8f8"}} onClick={updateRaces} aria-label={"Center"}
+                <IconButton size={"large"} style={{backgroundColor: "#f8f8f8"}} onClick={updateRaces}
+                            aria-label={"Center"}
                             id={"center-pos-up"}><RefreshRounded/></IconButton>
-                <IconButton size={"large"} style={{backgroundColor:"#f8f8f8"}} onClick={track.just_once} aria-label={"Center"}
+                <IconButton size={"large"} style={{backgroundColor: "#f8f8f8"}} onClick={track.just_once}
+                            aria-label={"Center"}
                             id={"center-pos"}><MyLocation/></IconButton>
                 <BottomNavigation
                     size={"large"}

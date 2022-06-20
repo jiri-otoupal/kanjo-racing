@@ -141,7 +141,9 @@ class RaceContainer extends React.Component {
         const styles = Object.assign({}, paperStyle, this.margin, {backgroundImage: this.vehicle_img});
         const changeLoading = this.changeLoadingSave;
         const _waypoints = this.race["waypoints"];
-        console.log("Render Waypoints", _waypoints);
+        const race_location = this.race["waypoints"][0];
+        console.log("Race location", race_location);
+        console.log("Race Container Render Waypoints", _waypoints);
         const callbackEditMode = this.callbackEditMode;
         let car_items = [];
 
@@ -165,9 +167,9 @@ class RaceContainer extends React.Component {
                            onClick={this.changeLoadingSave.bind(true)}
                            style={{alignSelf: "center"}}
                            variant="contained">Save</LoadingButton></div>);
+
         //callApi("http://localhost/backend/race.php", function () {
         //}, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
-
 
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
@@ -184,9 +186,9 @@ class RaceContainer extends React.Component {
                           });
                       }}>
                     <input name={"latitude"} type={"text"} hidden readOnly
-                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lat : 30}/>
+                           value={_waypoints != null && _waypoints.length > 0 ? _waypoints[0].lat : 30}/>
                     <input name={"longitude"} type={"text"} hidden readOnly
-                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lng : 30}/>
+                           value={_waypoints != null && _waypoints.length > 0 ? _waypoints[0].lng : 30}/>
                     <input name={"chat_link"} type={"text"} hidden readOnly value={""}/>
                     <input name={"race_id"} type={"text"} hidden readOnly value={this.race["race_id"]}/>
                     <input name={"session_id"} type={"text"} hidden readOnly value={getCookie("session_id")}/>
