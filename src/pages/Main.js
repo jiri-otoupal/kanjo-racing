@@ -654,7 +654,7 @@ const Main = () => {
                     //pitch={60}
 
                     mapboxAccessToken={access_token}
-                    //TODO: Fix this
+
                     viewState={coords}
                     onZoomStart={resetCoords}
                     onDragStart={resetCoords}

@@ -37,14 +37,20 @@ class Leaderboard extends React.Component {
             {field: 'position', headerName: 'Pos', width: 15},
             {
                 field: 'name',
-                headerName: 'Name',
+                headerName: 'Racer',
                 editable: false,
             },
             {
                 field: 'percent',
                 headerName: '%',
                 editable: false,
-                width: 20
+                width: 22
+            },
+            {
+                field: 'lap',
+                headerName: 'Lap',
+                editable: false,
+                width: 15
             },
         ];
 
@@ -62,7 +68,8 @@ class Leaderboard extends React.Component {
             const race_step = this.props.racers[i]["step"];
             rows.unshift({
                 name: this.props.racers[i]["name"],
-                percent: (percent > 100 ? 0 : race_step === this.props.waypoints.length ? 100 : percent) + " %"
+                percent: (percent > 100 ? 0 : race_step === this.props.waypoints.length ? 100 : percent) + " %",
+                lap: this.props.racers[i]["lap"]
             });
         }
 
@@ -78,7 +85,7 @@ class Leaderboard extends React.Component {
                 position: "absolute",
                 left: "6px",
                 top: "6px",
-                width: "205px",
+                width: "230px",
                 overflowX: "hidden",
                 backgroundColor: "rgb(0,0,0,0.75)"
             }}

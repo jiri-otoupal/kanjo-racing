@@ -30,6 +30,7 @@ export class Race extends React.Component {
         this.refreshTime = this.refreshTime.bind(this);
         this.racers_pos = [];
         this.race = props["race"];
+        this.step = 0;
 
         const remainingSec = (new Date(this.race["start_time"]) - new Date()) / 1000;
         this.state = {
@@ -65,7 +66,7 @@ export class Race extends React.Component {
         racers.forEach(racer => {
             markers.push(<Marker longitude={racer.longitude} latitude={racer.latitude}>
                 {racer.user_id !== getCookie("user_id") ? <Circle sx={{fontSize: '1.5rem'}} style={{color: "red"}}/> :
-                    <Circle sx={{fontSize: '1.5rem'}} style={{color: "green"}}/>}
+                    <Circle sx={{fontSize: '1rem'}} style={{color: "green"}}/>}
             </Marker>);
         });
         return markers;
@@ -75,9 +76,10 @@ export class Race extends React.Component {
         let markers = [];
 
         route_waypoints.forEach(waypoint => {
-            markers.push(<Marker longitude={waypoint.longitude} latitude={waypoint.latitude}>
-                <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
-            </Marker>);
+            if (waypoint.step >= this.step)
+                markers.push(<Marker longitude={waypoint.longitude} latitude={waypoint.latitude}>
+                    <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
+                </Marker>);
         });
         return markers;
     }
@@ -123,7 +125,7 @@ export class Race extends React.Component {
 
         if (event.target.checked) {
             this.startLocationWatch();
-
+            this.props.drawRoute(this.waypoints);
         } else {
             this.props.drawWaypoints(null);
             this.props.setMapLocation(null);
@@ -142,8 +144,11 @@ export class Race extends React.Component {
 
     callbackLocationUpdate(data) {
         if (data["collect"] === true) {
+            this.props.drawRoute(this.waypoints);
             const audio = new Audio(WaypointSound);
             const promise = audio.play();
+            this.step = data["step"];
+
             if (promise !== undefined) {
                 promise.then(_ => {
                     // Autoplay started!
@@ -259,17 +264,6 @@ export class Race extends React.Component {
             race: this.race
         });
         const readyBg = "rgb(0,0,0,0.8)";
-
-
-        const startingImg = <div style={{
-            position: "absolute",
-            backgroundImage: 'url(' + StartGif + ')',
-            width: "100vw",
-            height: "100vh",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain"
-        }}/>;
-
         console.log("Time", new Date(this.race["start_time"]));
 
 
@@ -292,7 +286,7 @@ export class Race extends React.Component {
                 label="Ready" style={{
                 position: "absolute",
                 right: 0,
-                bottom: "10%",
+                bottom: "10vh",
                 color: "#f8f8f8",
                 borderRadius: "12px",
                 paddingRight: "12px",

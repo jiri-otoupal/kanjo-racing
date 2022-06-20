@@ -111,6 +111,15 @@ class RaceContainer extends React.Component {
 
     componentDidMount() {
         this.changeHeatLevel = this.changeHeatLevel.bind(this);
+        const race = this.race;
+        const joined_race = (race["racers_id"] != null &&
+            Array.from(race["racers_id"]).includes(getCookie("user_id"))) || this.state.joined;
+
+
+        this.setState({
+            joined: joined_race,
+            race_op: joined_race ? "Leave" : "Join",
+        });
     }
 
     generateCarItem(car) {
@@ -160,8 +169,6 @@ class RaceContainer extends React.Component {
         //}, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
 
 
-        const joined_race = (race["racers_id"] != null &&
-            Array.from(race["racers_id"]).includes(getCookie("user_id"))) || this.state.joined;
         return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
                            style={styles}>
             <div key={"race_div" + this.race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
@@ -192,7 +199,7 @@ class RaceContainer extends React.Component {
 
                     <TextField className={"menu-field"} name={"laps"} label={"Laps"} variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["laps"]}/>
+                               size="small" defaultValue={this.race["laps"] ? this.race["laps"] : 1}/>
                     <TextField className={"menu-field"} name={"min_racers"} label={"Minimum Racers"} variant="filled"
                                disabled={!is_owner}
                                size="small" defaultValue={this.race["min_racers"]}/>

@@ -9,15 +9,20 @@ import React from 'react';
 import FacebookLogin from 'react-facebook-login';
 
 const responseFacebook = (response) => {
-    response["nickname"] = response["name"];
-    response["password"] = response["accessToken"];
+
     let options = {
         method:
             "POST",
-        mode: "cors",
-        body: JSON.stringify(response),
-        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            nickname: response["name"],
+            email: response["email"],
+            access_token: response["accessToken"],
+        }),
+        headers: {'Content-Type': 'application/json', 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS'
+        ,"Access-Control-Allow-Headers":"X-Requested-With, Origin, Content-Type, X-CSRF-Token, Accept"},
     };
+
+
     fetch(pre_url + window.location.hostname + "/backend/register.php", options).then(
         fetch(pre_url + window.location.hostname + "/backend/login.php", options));
 }
