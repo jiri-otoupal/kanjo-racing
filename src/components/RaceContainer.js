@@ -124,14 +124,14 @@ class RaceContainer extends React.Component {
 
     generateCarItem(car) {
         console.log("Car", car);
+        if (car == null)
+            return;
         return <MenuItem value={car.id}>{car.name}</MenuItem>;
     }
 
     render() {
         const zoom = 14;
         const race = this.race;
-        const lat = this.race["latitude"];
-        const lng = this.race["longitude"];
         const is_owner = this.race["owner_id"] === getCookie("user_id");
         const updateRaceOnChangeCallback = this.updateRaceOnChangeCallback;
         const handleSaveRace = this.handleSaveRace;
@@ -142,6 +142,8 @@ class RaceContainer extends React.Component {
         const changeLoading = this.changeLoadingSave;
         const _waypoints = this.race["waypoints"];
         const race_location = this.race["waypoints"][0];
+        const lat = race_location.latitude;
+        const lng = race_location.longitude;
         console.log("Race location", race_location);
         console.log("Race Container Render Waypoints", _waypoints);
         const callbackEditMode = this.callbackEditMode;

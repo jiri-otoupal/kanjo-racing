@@ -174,9 +174,16 @@ const Main = () => {
     }
 
     function generateCarRow(car) {
+        if (car == null) {
+            console.log("Car for generate is null")
+            return;
+        } else {
+            console.log(car);
+        }
+
         let vehicle_img = "url(" + SampleCar + ")";
 
-        if (car["img_url"] !== "")
+        if (car.hasOwnProperty("img_url") || car["img_url"] !== "")
             vehicle_img = "url(" + car['img_url'] + ")";
 
 
@@ -263,23 +270,31 @@ const Main = () => {
         }
 
         setLoadedCars(true);
+        console.log(data)
 
-        if (data["cars"] == null || data["cars"].length === 0) {
+
+        let cars = data["cars"];
+
+        if (!Array.isArray(data["cars"]))
+            cars = [data["cars"]];
+
+
+        if (cars == null || cars.length === 0) {
             setCarsExist(false);
         } else {
             let tmp = [];
 
-            if (Object.keys(races).includes("id")) {
-                tmp.push(generateCarRow(data["cars"]));
+            if (Object.keys(cars).includes("id")) {
+                tmp.push(generateCarRow(cars));
             } else {
-                for (let i = 0; i < data["cars"].length; i++)
-                    tmp.push(generateCarRow(data["cars"][i]));
+                for (let i = 0; i < cars.length; i++)
+                    tmp.push(generateCarRow(cars[i]));
             }
 
             tmp_cars.current = tmp;
             setCars(tmp_cars.current);
             setCarsExist(true);
-            cars_ref.current = data["cars"];
+            cars_ref.current = cars;
         }
     }
 
