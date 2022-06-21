@@ -500,9 +500,8 @@ const Main = () => {
 
 
         tmp_races.current.push(generateRaceRow({
-            name: "Enter Race Name", owner_id: getCookie("user_id")
+            name: "Enter Race Name", owner_id: getCookie("user_id"), waypoints: waypoints.current
         }));
-
 
         setBlockAddRace(true);
         setRaces(tmp_races.current);

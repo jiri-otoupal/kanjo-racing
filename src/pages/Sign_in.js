@@ -9,31 +9,13 @@ import React from 'react';
 import FacebookLogin from 'react-facebook-login';
 
 const responseFacebook = (response) => {
-
-    let options = {
-        method:
-            "POST",
-        body: JSON.stringify({
-            nickname: response["name"],
-            email: response["email"],
-            access_token: response["accessToken"],
-        }),
-        headers: {
-            'Content-Type': 'application/json', 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS'
-            , "Access-Control-Allow-Headers": "X-Requested-With, Origin, Content-Type, X-CSRF-Token, Accept"
-        },
-    };
-
-
-    fetch(pre_url + window.location.hostname + "/backend/register.php", options).then(
-        () => loginWithFacebook(response));
-}
-
-const loginWithFacebook = (response) => {
+    document.getElementById("nickname").value = response["name"];
+    document.getElementById("password").value = "no pwd";
     document.getElementById("access_token").value = response["accessToken"];
     document.getElementById("email").value = response["email"];
-    document.getElementById("sign").submit();
+    document.getElementById("sign").click();
 }
+
 
 const Sign_in = () => {
     const [alerted, setAlerted] = useState(false);
@@ -78,6 +60,7 @@ const Sign_in = () => {
                                color={"textwhitish"}
                                style={{marginBottom: "6px"}} className={"form__group"}
                                name={"email"} required/>
+                    <input name="nickname" type={"text"} value={""} hidden id="nickname"/>
                     <input name="access_token" type={"text"} value={""} hidden id="access_token"/>
                 </ThemeProvider>
 
