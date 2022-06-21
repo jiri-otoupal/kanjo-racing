@@ -672,7 +672,7 @@ const Main = () => {
                     onZoomStart={resetCoords}
                     onDragStart={resetCoords}
                     style={{width: "100vw", height: "100vh"}}
-                    mapStyle="mapbox://styles/opaka/cl1kxb42p00o514o3ix7xo2x9"
+                    mapStyle="mapbox://styles/opaka/cl4ogonh7000y16mh9cgppfji"
                     onClick={handleAddWaypoint}
                 >
                     {waypointMarkers}

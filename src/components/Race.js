@@ -179,6 +179,7 @@ export class Race extends React.Component {
             const distance = gps2m(racer["latitude"], racer["longitude"], next_waypoint.latitude, next_waypoint.longitude)
 
             tmp_racers.push({
+                lap: racer["lap"],
                 step: raceStep,
                 distance: distance,
                 user_id: racer["user_id"],
