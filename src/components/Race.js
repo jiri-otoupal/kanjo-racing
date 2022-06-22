@@ -6,12 +6,14 @@ import {Marker} from "react-map-gl";
 import {Check, Circle, Clear} from "@mui/icons-material";
 import {CountdownCircleTimer} from 'react-countdown-circle-timer'
 import {Checkbox, FormControlLabel} from "@mui/material";
-import StartGif from "./../resources/images/start.gif";
 import WaypointSound from "./../resources/audio/waypoint.wav";
 
 export class Race extends React.Component {
     constructor(props) {
         super(props);
+        if (props.race == null)
+            return;
+
         this.alerted = false;
         this.callbackWaypoints = this.callbackWaypoints.bind(this);
         this.update = this.update.bind(this);
@@ -19,26 +21,27 @@ export class Race extends React.Component {
         this.callbackLocationUpdate = this.callbackLocationUpdate.bind(this);
         this.stopLocationWatch = this.stopLocationWatch.bind(this);
         this.render = this.render.bind(this);
-        this.getState = this.getState.bind(this);
         this.generateRacerMarkers = this.generateRacerMarkers.bind(this);
         this.handleReady = this.handleReady.bind(this);
         this.startLocationWatch = this.startLocationWatch.bind(this);
         this.startRace = this.startRace.bind(this);
         this.generateGateMarkers = this.generateGateMarkers.bind(this);
         this.refreshTime = this.refreshTime.bind(this);
+        this.randColor = this.randColor.bind(this);
         this.racers_pos = [];
         this.race = props["race"];
+        this.step = 0;
 
         const remainingSec = (new Date(this.race["start_time"]) - new Date()) / 1000;
         this.state = {
             ready: false,
             racers_pos: [],
             displayCounter: true,
-            remainingSeconds:remainingSec
+            remainingSeconds: remainingSec
         };
 
 
-        callApi("http://localhost:80/backend/race.php", this.callbackWaypoints, {
+        callApi("/backend/race.php", this.callbackWaypoints, {
             op: "get_waypoints",
             race_id: this.race.race_id
         });
@@ -49,20 +52,29 @@ export class Race extends React.Component {
         console.log("Started Location watch");
         const watchOptions = {
             timeout: 10000,
-            maxAge: 100, //ms
+            maxAge: 50, //ms
             enableHighAccuracy: true
         };
         if (navigator.geolocation)
             this.watchId = navigator.geolocation.watchPosition(this.update, this.handleError, watchOptions);
     }
 
+    randColor() {
+        const r = ('0' + (Math.random() * 256 | 0).toString(16)).slice(-2),
+            g = ('0' + (Math.random() * 256 | 0).toString(16)).slice(-2),
+            b = ('0' + (Math.random() * 256 | 0).toString(16)).slice(-2);
+        return '#' + r + g + b;
+    }
+
     generateRacerMarkers(racers) {
+
         let markers = [];
 
         racers.forEach(racer => {
             markers.push(<Marker longitude={racer.longitude} latitude={racer.latitude}>
                 {racer.user_id !== getCookie("user_id") ? <Circle sx={{fontSize: '1.5rem'}} style={{color: "red"}}/> :
-                    <Circle sx={{fontSize: '1.5rem'}} style={{color: "green"}}/>}
+                    <Circle sx={{fontSize: '1rem'}} style={{color: this.randColor()}}/>}
+                <b style={{color: "darkred"}}>{racer.name}</b>
             </Marker>);
         });
         return markers;
@@ -71,10 +83,11 @@ export class Race extends React.Component {
     generateGateMarkers(route_waypoints) {
         let markers = [];
 
-        route_waypoints.forEach(racer => {
-            markers.push(<Marker longitude={racer.longitude} latitude={racer.latitude}>
-                <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
-            </Marker>);
+        route_waypoints.forEach(waypoint => {
+            if (waypoint.step >= this.step)
+                markers.push(<Marker longitude={waypoint.longitude} latitude={waypoint.latitude}>
+                    <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
+                </Marker>);
         });
         return markers;
     }
@@ -85,10 +98,10 @@ export class Race extends React.Component {
         } else {
 
             const callback = this.callbackLocationUpdate;
-            callApi("http://localhost:80/backend/tracking.php", callback, {
+            callApi("/backend/tracking.php", callback, {
                 latitude: pos.coords.latitude,
                 longitude: pos.coords.longitude,
-                race_id: this.race.race_id
+                race_id: this.race.race_id,
             });
         }
         console.log("Ready", this.state.ready);
@@ -118,10 +131,17 @@ export class Race extends React.Component {
             displayCounter: event.target.checked
         });
 
-        if (event.target.checked)
+        if (event.target.checked) {
             this.startLocationWatch();
-        else
+            this.props.drawRoute(this.waypoints);
+        } else {
+            this.props.drawWaypoints(null);
+            this.props.setMapLocation(null);
+
+            this.props.drawRoute(null);
+            this.props.mapUpdate(null);
             this.stopLocationWatch();
+        }
     }
 
     callbackWaypoints(data) {
@@ -132,8 +152,11 @@ export class Race extends React.Component {
 
     callbackLocationUpdate(data) {
         if (data["collect"] === true) {
+            this.props.drawRoute(this.waypoints);
             const audio = new Audio(WaypointSound);
             const promise = audio.play();
+            this.step = data["step"];
+
             if (promise !== undefined) {
                 promise.then(_ => {
                     // Autoplay started!
@@ -149,18 +172,20 @@ export class Race extends React.Component {
                 });
             }
         }
+        if (Object.keys(data["racers"]).includes("user_id"))
+            this.racers = [data["racers"]];
+        else
+            this.racers = data["racers"];
 
-        this.racers = data["racers"];
         let tmp_racers = [];
         const browser_user_id = getCookie("user_id");
 
         this.racers.forEach(racer => {
             const raceStep = racer["step"];
-            const i_w = raceStep != null ? raceStep - 1 : 0;
-            const next_waypoint = this.waypoints[i_w];
-            const distance = gps2m(racer["latitude"], racer["longitude"], next_waypoint.latitude, next_waypoint.longitude)
+            const distance = racer["dtw"];
 
             tmp_racers.push({
+                lap: racer["lap"],
                 step: raceStep,
                 distance: distance,
                 user_id: racer["user_id"],
@@ -193,27 +218,24 @@ export class Race extends React.Component {
                 route_waypoints.splice(i, 1);
 
         const currentLocation = {latitude: this.racer["latitude"], longitude: this.racer["longitude"], zoom: 17};
+        route_waypoints.unshift(currentLocation);
 
         this.props.drawWaypoints(this.generateGateMarkers(route_waypoints));
         this.props.setMapLocation(currentLocation);
 
-        route_waypoints.unshift(currentLocation);
+        this.props.mapUpdate(this.generateRacerMarkers(tmp_racers));
 
-        this.props.drawRoute(route_waypoints);
-        this.props.mapUpdate(this.generateRacerMarkers(this.racers));
-
-    }
-
-    getState() {
-        return this.state;
     }
 
     refreshTime() {
-        this.setState({remainingSeconds: (new Date(this.race["start_time"]) - new Date()) / 1000})
+        let timeToRace = (new Date(this.race["start_time"]) - new Date()) / 1000;
+        this.setState({remainingSeconds: timeToRace})
     }
 
 
     render() {
+        if (this.state == null)
+            return null;
         const renderTime = ({remainingTime}) => {
             const hours = Math.floor(remainingTime / 3600)
             const minutes = Math.floor((remainingTime % 3600) / 60)
@@ -223,13 +245,13 @@ export class Race extends React.Component {
             if (isTimeUp && this.state.displayCounter)
                 this.startRace();
 
-            let format = `${hours}:${minutes}:${seconds}`;
+            let format = `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
             let fSize = "2rem";
             if (remainingTime < 60) {
                 format = remainingTime;
                 fSize = "7rem";
             } else if (hours === 0)
-                format = `${minutes}:${seconds}`;
+                format = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
             return (
                 <div className="time-wrapper">
@@ -242,26 +264,13 @@ export class Race extends React.Component {
         };
 
 
-
-
-
         const leaderboard = React.createElement(Leaderboard, {
             waypoints: this.waypoints,
-            racers: this.state.racers_pos
+            racers: this.state.racers_pos,
+            race: this.race
         });
         const readyBg = "rgb(0,0,0,0.8)";
-
-
-        const startingImg = <div style={{
-            position: "absolute",
-            backgroundImage: 'url(' + StartGif + ')',
-            width: "100vw",
-            height: "100vh",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain"
-        }}/>;
-
-        console.log("Time", this.race, new Date(this.race["start_time"]))
+        console.log("Time", new Date(this.race["start_time"]));
 
 
         return <div>
@@ -283,7 +292,7 @@ export class Race extends React.Component {
                 label="Ready" style={{
                 position: "absolute",
                 right: 0,
-                bottom: 70,
+                bottom: "15vh",
                 color: "#f8f8f8",
                 borderRadius: "12px",
                 paddingRight: "12px",
@@ -292,8 +301,7 @@ export class Race extends React.Component {
                 backgroundColor: this.state.ready ? "rgb(0,0,0,0.75)" : readyBg
             }}
                 control={<Checkbox variant={this.state.ready ? "contained" : "outlined"} color="error" size={"large"}
-                                   onChange={this.handleReady}
-                >
+                                   onChange={this.handleReady}>
                     {this.state.ready ? <Check/> : <Clear/>}Ready
                 </Checkbox>}/>
 

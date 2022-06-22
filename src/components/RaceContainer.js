@@ -6,6 +6,7 @@ import {Input, paperStyle} from "./styles/main";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SampleCar from "../resources/images/sample_car.png";
 import {RaceTimeSelector} from "./RaceTimeSelector";
+import {pre_url} from "../config";
 
 class RaceContainer extends React.Component {
     constructor(props) {
@@ -68,7 +69,7 @@ class RaceContainer extends React.Component {
         };
 
         console.log("Custom Data", customData);
-        callApi("http://localhost:80/backend/race.php", this.callbackJoin, customData);
+        callApi("/backend/race.php", this.callbackJoin, customData);
     }
 
     callbackJoin(data) {
@@ -110,28 +111,42 @@ class RaceContainer extends React.Component {
 
     componentDidMount() {
         this.changeHeatLevel = this.changeHeatLevel.bind(this);
+        const race = this.race;
+        const joined_race = (race["racers_id"] != null &&
+            Array.from(race["racers_id"]).includes(getCookie("user_id"))) || this.state.joined;
+
+
+        this.setState({
+            joined: joined_race,
+            race_op: joined_race ? "Leave" : "Join",
+        });
     }
 
     generateCarItem(car) {
         console.log("Car", car);
+        if (car == null)
+            return;
         return <MenuItem value={car.id}>{car.name}</MenuItem>;
     }
 
     render() {
         const zoom = 14;
         const race = this.race;
-        const lat = this.race["latitude"];
-        const lng = this.race["longitude"];
-        const is_owner = this.race["owner_id"] === getCookie("user_id");
+        const is_owner = race["owner_id"] === getCookie("user_id");
         const updateRaceOnChangeCallback = this.updateRaceOnChangeCallback;
         const handleSaveRace = this.handleSaveRace;
-        const id = this.race["race_id"];
+        const id = race["race_id"];
         const deleteRace = this.delete_race;
-        const timeSelector = React.createElement(RaceTimeSelector, {r: this.race, owner: is_owner});
+        const timeSelector = React.createElement(RaceTimeSelector, {r: race, owner: is_owner});
         const styles = Object.assign({}, paperStyle, this.margin, {backgroundImage: this.vehicle_img});
         const changeLoading = this.changeLoadingSave;
-        const _waypoints = this.race["waypoints"];
-        console.log("Render Waypoints", _waypoints);
+        const _waypoints = race["waypoints"];
+        let lat = race.latitude, lng = race.longitude;
+
+        console.log("Waypoints to save", _waypoints);
+
+
+        console.log("Race Container Render Waypoints", _waypoints);
         const callbackEditMode = this.callbackEditMode;
         let car_items = [];
 
@@ -155,61 +170,58 @@ class RaceContainer extends React.Component {
                            onClick={this.changeLoadingSave.bind(true)}
                            style={{alignSelf: "center"}}
                            variant="contained">Save</LoadingButton></div>);
+
         //callApi("http://localhost/backend/race.php", function () {
         //}, {race_id: this.race["race_id"], waypoints: this.waypoints.current});
 
-
-        const joined_race = (race["racers_id"] != null &&
-            Array.from(race["racers_id"]).includes(getCookie("user_id"))) || this.state.joined;
-        return (<Container key={"container" + this.race["race_id"]} maxWidth={"sm"}
+        return (<Container key={"container" + race["race_id"]} maxWidth={"sm"}
                            style={styles}>
-            <div key={"race_div" + this.race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
-                <form action="http://localhost:80/backend/race.php"
+            <div key={"race_div" + race["race_id"]} style={{marginTop: "12px", marginBottom: "12px"}}>
+                <form action={pre_url + window.location.hostname + "/backend/race.php"}
                       method="post"
                       onSubmit={(event) => {
                           handleSaveRace(event, function (data) {
                               console.log("Waypoints in Race", id, _waypoints)
-                              race["waypoints"] = _waypoints;
 
                               updateRaceOnChangeCallback(data);
                               changeLoading(false);
                           });
                       }}>
                     <input name={"latitude"} type={"text"} hidden readOnly
-                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lat : 30}/>
+                           value={race.latitude}/>
                     <input name={"longitude"} type={"text"} hidden readOnly
-                           value={_waypoints != null && _waypoints.length ? _waypoints[0].lng : 30}/>
+                           value={race.longitude}/>
                     <input name={"chat_link"} type={"text"} hidden readOnly value={""}/>
-                    <input name={"race_id"} type={"text"} hidden readOnly value={this.race["race_id"]}/>
+                    <input name={"race_id"} type={"text"} hidden readOnly value={race["race_id"]}/>
                     <input name={"session_id"} type={"text"} hidden readOnly value={getCookie("session_id")}/>
                     <TextField className={"menu-field"} name={"name"} label={"Nickname"} required variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["name"]}/>
+                               size="small" defaultValue={race["name"]}/>
 
                     {timeSelector}
 
 
                     <TextField className={"menu-field"} name={"laps"} label={"Laps"} variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["laps"]}/>
+                               size="small" defaultValue={race["laps"] ? race["laps"] : 1}/>
                     <TextField className={"menu-field"} name={"min_racers"} label={"Minimum Racers"} variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["min_racers"]}/>
+                               size="small" defaultValue={race["min_racers"]}/>
 
                     <TextField className={"menu-field"} name={"max_racers"} label={"Maximum Racers"} variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["max_racers"]}/>
+                               size="small" defaultValue={race["max_racers"]}/>
                     <TextField className={"menu-field"} name={"max_hp"} label={"Maximum HP"} variant="filled"
                                disabled={!is_owner}
-                               size="small" defaultValue={this.race["max_hp"]}/>
+                               size="small" defaultValue={race["max_hp"]}/>
 
                     <TextField className={"menu-field"} name={"password"} label={"Password"} variant="filled"
-                               size="small" defaultValue={this.race["password"]}/>
+                               size="small" defaultValue={race["password"]}/>
 
                     <TextField className={"menu-field"} name={"min_req_karma"} label={"Minimum Karma Needed"}
                                disabled={!is_owner}
                                variant="filled"
-                               size="small" defaultValue={this.race["min_req_karma"]}/>
+                               size="small" defaultValue={race["min_req_karma"]}/>
 
                     <FormControl fullWidth>
                         <InputLabel id="select-heat-grade">Heat Grade</InputLabel>
@@ -234,6 +246,7 @@ class RaceContainer extends React.Component {
                         <Select
                             labelId="vehicle-select"
                             id="car-select"
+                            defaultValue={0}
                             name={"car_id"}
                             value={this.state.car}
                             label="Vehicle"
@@ -248,7 +261,8 @@ class RaceContainer extends React.Component {
 
                     <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
                         {is_owner ? owner_elems : null}
-                        <Link style={{alignSelf: "center", marginLeft: "6px"}} variant="body2"
+                        <Link style={{alignSelf: "center", marginLeft: "6px"}} variant="body2" target="_blank"
+                              rel="noopener noreferrer"
                               href={"https://www.google.com/maps/place/" + lat + "," + lng + "/@" + lat + "," + lng + "," + zoom + "z"}><span>Google
                             Maps<br/>Location</span></Link>
                     </div>

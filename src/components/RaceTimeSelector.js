@@ -11,6 +11,7 @@ export class RaceTimeSelector extends React.Component {
         this.state = {
             raceTime: race_data["start_time"]
         };
+        this.changeDate = this.changeDate.bind(this);
     }
 
     componentDidMount() {
@@ -27,6 +28,7 @@ export class RaceTimeSelector extends React.Component {
         return (
             <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DateTimePicker
+                    inputFormat={"yyyy/MM/dd HH:mm:ss"}
                     value={this.state.raceTime}
                     onChange={this.changeDate}
                     disabled={!this.owner}

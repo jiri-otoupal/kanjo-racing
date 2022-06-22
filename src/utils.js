@@ -1,5 +1,5 @@
 import $ from "jquery";
-import {access_token} from "./config";
+import {access_token, api_port, pre_url} from "./config";
 
 function formDataToJson(form) {
     let jsonObj = {};
@@ -53,7 +53,7 @@ export const getCookie = (cname) => {
 export const callApi = (url, callback, custom_data = {}) => {
     $.ajax({
         type: "POST",
-        url: url,
+        url: pre_url  + window.location.hostname + api_port + url,
         data: Object.assign({session_id: getCookie("session_id")}, custom_data),
         success(data) {
             callback(data);
@@ -63,8 +63,8 @@ export const callApi = (url, callback, custom_data = {}) => {
 
 export const getInterpolatedPathRequestFromWaypoints = (__waypoints) => {
     let value = Object.values(__waypoints);
-    let waypoint_pairs=null;
-    if(__waypoints[0].lng!=null&&__waypoints[0].lat!=null)
+    let waypoint_pairs;
+    if (__waypoints[0].lng != null && __waypoints[0].lat != null)
         waypoint_pairs = value.map(object => object.lng + "," + object.lat);
     else
         waypoint_pairs = value.map(object => object.longitude + "," + object.latitude);

@@ -10,7 +10,7 @@ class Leaderboard extends React.Component {
         this.getRaceDistance();
     }
 
-    getRaceDistance(){
+    getRaceDistance() {
         if (this.props.waypoints) {
             const last_index = this.props.waypoints.length - 1;
 
@@ -34,17 +34,24 @@ class Leaderboard extends React.Component {
         this.getRaceDistance();
 
         const columns = [
-            {field: 'position', headerName: 'Pos', width: 15},
+            {field: 'position', headerName: 'Pos', width: 8},
             {
                 field: 'name',
-                headerName: 'Name',
+                headerName: 'Racer',
                 editable: false,
+                width: 40
             },
             {
                 field: 'percent',
                 headerName: '%',
                 editable: false,
-                width: 15
+                width: 10
+            },
+            {
+                field: 'lap',
+                headerName: 'Lap',
+                editable: false,
+                width: 8
             },
         ];
 
@@ -57,12 +64,13 @@ class Leaderboard extends React.Component {
 
             const user_distance = gps2m(start_lat, start_lng, this.end_lat, this.end_lng);
 
-            console.log("Distance",user_distance,this.race_distance);
+            console.log("Distance", user_distance, this.race_distance);
             const percent = Math.round((user_distance / this.race_distance) * 100);
             const race_step = this.props.racers[i]["step"];
             rows.unshift({
                 name: this.props.racers[i]["name"],
-                percent: (percent > 100 ? 0 : race_step === this.props.waypoints.length ? 100 : percent) + " %"
+                percent: (percent > 100 ? 0 : race_step === this.props.waypoints.length ? 100 : percent),
+                lap: this.props.racers[i]["lap"]
             });
         }
 
@@ -78,7 +86,7 @@ class Leaderboard extends React.Component {
                 position: "absolute",
                 left: "6px",
                 top: "6px",
-                width: "205px",
+                width: "230px",
                 overflowX: "hidden",
                 backgroundColor: "rgb(0,0,0,0.75)"
             }}
