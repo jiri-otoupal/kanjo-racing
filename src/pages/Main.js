@@ -668,13 +668,13 @@ const Main = () => {
         for (const [i, race] of (Object.keys(races_storage.current).includes("race_id") ? Object.entries([races_storage.current])
             : Object.entries(races_storage.current))) {
             races.push(<Marker longitude={race.longitude} latitude={race.latitude}>
-                <Flag sx={{fontSize: '1.5rem'}} style={{color: "white"}}/><b
+                <Flag sx={{fontSize: '2.5rem'}} style={{color: "white"}}/><b
                 style={{
-                    color: "black",
+                    color: "darkred",
                     fontSize: "1.5rem",
                     backgroundColor: "rgb(255,255,255,0.75)",
                     borderRadius: "6px"
-                }}><p style={{color: "darkred"}}>Race</p> {race.name}</b>
+                }}>{race.name}</b>
             </Marker>)
         }
 
