@@ -34,24 +34,24 @@ class Leaderboard extends React.Component {
         this.getRaceDistance();
 
         const columns = [
-            {field: 'position', headerName: 'Pos', width: 10},
+            {field: 'position', headerName: 'Pos', width: 8},
             {
                 field: 'name',
                 headerName: 'Racer',
                 editable: false,
-                width: 22
+                width: 40
             },
             {
                 field: 'percent',
                 headerName: '%',
                 editable: false,
-                width: 15
+                width: 10
             },
             {
                 field: 'lap',
                 headerName: 'Lap',
                 editable: false,
-                width: 10
+                width: 8
             },
         ];
 

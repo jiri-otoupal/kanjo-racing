@@ -60,15 +60,13 @@ const Main = () => {
     //TODO: connect to button to set deletion mode
     const [popupInfo, setPopupInfo] = useState(null);
     const [raceEditMode, setRaceEditMode] = useState(false);
-    const [geojson, setGeoJson] = useState({});
+    const [geoJson, setGeoJson] = useState({});
     const [markers, setMarkers] = useState([]);
     const [racerMarkers, setRacerMarkers] = useState([]);
     const [waypointMarkers, setWaypointMarkers] = useState([]);
     const [racePane, setRacePane] = useState(null);
 
     const [coords, setCoords] = useState({});
-    const [latitude, setLatitude] = useState(0);
-    const [longitude, setLongitude] = useState(0);
 
     const [loadedProfile, setLoadedProfile] = useState(false);
     const [loadedCars, setLoadedCars] = useState(false);
@@ -112,12 +110,16 @@ const Main = () => {
         );
         const json = await query.json();
         const data = json.routes[0];
-        const route = data.geometry.coordinates;
+        let route = data.geometry.coordinates;
 
+        //for (let i = 0; i < route.length; i++) {
+        //    route[i] = [route[i][1], route[i][0]]
+        //}
 
         const geoJsonTmp = geoJsonTemplate(route);
-
+        console.log(geoJsonTmp);
         setGeoJson(geoJsonTmp);
+
         if (showDistance)
             setDistance(data.distance);
     }
@@ -333,6 +335,7 @@ const Main = () => {
     }
 
     function callbackDrawRaceRoute(coords) {
+        console.log("Draw route coords", coords);
         if (coords == null)
             setGeoJson({});
         if (coords.length >= 1) {
@@ -389,26 +392,27 @@ const Main = () => {
         setLoadedCars(false);
         setLoadedRaces(true);
 
-        const races = data["races"];
+        let races = data["races"];
         for (const [i, race] of (Object.keys(races).includes("race_id") ? Object.entries([races]) : Object.entries(races))) {
             console.log("Race", i, race);
-            if (!race.hasOwnProperty("waypoints_np") || race["waypoints_np"] == null)
-                continue;
 
             let waypoint_arr = [];
-            const waypoints_tmp = race["waypoints_np"].split(";");
-            waypoints_tmp.forEach(waypoint => {
-                const waypoint_tmp = waypoint.split(",");
-                waypoint_arr.push({step: waypoint_tmp[0], lat: waypoint_tmp[1], lng: waypoint_tmp[2]});
-            });
+
+            if (race.hasOwnProperty("waypoints_np") && race["waypoints_np"] !== null) {
+                const waypoints_tmp = race["waypoints_np"].split(";");
+                waypoints_tmp.forEach(waypoint => {
+                    const waypoint_tmp = waypoint.split(",");
+                    waypoint_arr.push({step: waypoint_tmp[0], lat: waypoint_tmp[1], lng: waypoint_tmp[2]});
+                });
+            }
             Object.assign(race, {waypoints: waypoint_arr});
-            //data["races"][i]["waypoints"] = waypoints;
         }
 
-        console.log("Handle Races update", data["races"]);
+        console.log("Handle Races update", races);
 
 
         let tmp = [];
+
         races_storage.current = races;
 
         if (Object.keys(races).includes("race_id")) {
@@ -417,6 +421,8 @@ const Main = () => {
             for (let i = 0; i < races.length; i++)
                 tmp.push(generateRaceRow(races[i]));
         }
+
+
         tmp_races.current = tmp;
         setRaces(tmp_races.current); //TODO: maybe better to use ref
     }
@@ -551,7 +557,9 @@ const Main = () => {
     );
 
     function clearWaypoints() {
+        console.log("clearing waypoints");
         setChecked(false);
+        setRacerMarkers([]);
         setRaceEditMode(false);
         const geoJsonTmp = geoJsonTemplate({});
         waypoints.current = [];
@@ -672,14 +680,15 @@ const Main = () => {
                     onZoomStart={resetCoords}
                     onDragStart={resetCoords}
                     style={{width: "100vw", height: "100vh"}}
-                    mapStyle="mapbox://styles/opaka/cl4ogonh7000y16mh9cgppfji"
+                    mapStyle="mapbox://styles/opaka/cl1kxb42p00o514o3ix7xo2x9"
                     onClick={handleAddWaypoint}
                 >
                     {waypointMarkers}
                     {racerMarkers}
 
                     {bottomNavVal === 0 ? racePane : null}
-                    <Source id="route" type="geojson" data={geojson}>
+
+                    <Source id="route" type="geojson" data={geoJson}>
                         <Layer  {...layerStyle} />
                     </Source>
 
