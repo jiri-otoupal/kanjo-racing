@@ -141,10 +141,9 @@ class RaceContainer extends React.Component {
         const styles = Object.assign({}, paperStyle, this.margin, {backgroundImage: this.vehicle_img});
         const changeLoading = this.changeLoadingSave;
         const _waypoints = race["waypoints"];
-        let lat = null, lng = null;
+        let lat = race.latitude, lng = race.longitude;
 
-        console.log("Waypoints to save",_waypoints);
-
+        console.log("Waypoints to save", _waypoints);
 
 
         console.log("Race Container Render Waypoints", _waypoints);
@@ -262,7 +261,8 @@ class RaceContainer extends React.Component {
 
                     <div style={{display: "inline-flex", justifyContent: "left", alignItems: "flex-start"}}>
                         {is_owner ? owner_elems : null}
-                        <Link style={{alignSelf: "center", marginLeft: "6px"}} variant="body2"
+                        <Link style={{alignSelf: "center", marginLeft: "6px"}} variant="body2" target="_blank"
+                              rel="noopener noreferrer"
                               href={"https://www.google.com/maps/place/" + lat + "," + lng + "/@" + lat + "," + lng + "," + zoom + "z"}><span>Google
                             Maps<br/>Location</span></Link>
                     </div>
