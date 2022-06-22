@@ -21,7 +21,7 @@ import {
     Check,
     Circle,
     Delete as DeleteIcon,
-    DeleteOutlined,
+    DeleteOutlined, Flag,
     Flag as Race,
     FlagCircle,
     Garage, LocationOn, Map as MapIcon, MyLocation,
@@ -63,6 +63,7 @@ const Main = () => {
     const [geoJson, setGeoJson] = useState({});
     const [markers, setMarkers] = useState([]);
     const [racerMarkers, setRacerMarkers] = useState([]);
+    const [raceMarkers, setRaceMarkers] = useState([]);
     const [waypointMarkers, setWaypointMarkers] = useState([]);
     const [racePane, setRacePane] = useState(null);
 
@@ -112,6 +113,7 @@ const Main = () => {
         const data = json.routes[0];
         let route = data.geometry.coordinates;
 
+        // SWAP lat & lng
         //for (let i = 0; i < route.length; i++) {
         //    route[i] = [route[i][1], route[i][0]]
         //}
@@ -131,7 +133,10 @@ const Main = () => {
     }
 
     function handleSaveRace(e, callback) {
-        handleSubmit(e, callback, {waypoints: waypoints.current, session_id: getCookie("session_id")});
+        handleSubmit(e, callback, {
+            waypoints: waypoints.current,
+            session_id: getCookie("session_id"),
+        });
     }
 
     function getCoords(lat, long, zoom) {
@@ -301,7 +306,7 @@ const Main = () => {
     }
 
     function updateRaceOnChangeCallback(data) {
-        if (data["status"] === "OK") {
+        if (data != null && data["status"] === "OK") {
             console.log("Calling Update Races");
             callApi("/backend/race.php", handleRacesUpdate);
             callApi("/backend/car.php", handleCarsUpdate);
@@ -338,7 +343,7 @@ const Main = () => {
         console.log("Draw route coords", coords);
         if (coords == null)
             setGeoJson({});
-        if (coords.length >= 1) {
+        if (coords != null && coords.length >= 1) {
             const url = getInterpolatedPathRequestFromWaypoints(coords);
             renderRoute(url, false).then(r => function () {
             });
@@ -658,7 +663,21 @@ const Main = () => {
 
     function updateRaces() {
         updateRaceOnChangeCallback();
-        //TODO: append markers with races location
+        let races = [];
+
+        races_storage.current.forEach(race => {
+            races.push(<Marker longitude={race.longitude} latitude={race.latitude}>
+                <Flag sx={{fontSize: '1.5rem'}} style={{color: "white"}}/><b
+                style={{
+                    color: "black",
+                    fontSize: "1.5rem",
+                    backgroundColor: "rgb(255,255,255,0.75)",
+                    borderRadius: "6px"
+                }}>race.name</b>
+            </Marker>)
+        })
+
+        setRaceMarkers(races);
     }
 
     return (
@@ -685,6 +704,7 @@ const Main = () => {
                 >
                     {waypointMarkers}
                     {racerMarkers}
+                    {raceMarkers}
 
                     {bottomNavVal === 0 ? racePane : null}
 

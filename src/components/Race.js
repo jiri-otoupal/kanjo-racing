@@ -1,9 +1,8 @@
 import React from "react";
 import Leaderboard from "./Leaderboard";
 import {callApi, getCookie} from "../utils";
-import gps2m from "../location/GpsOperation";
 import {Marker} from "react-map-gl";
-import {Check, Circle, Clear} from "@mui/icons-material";
+import {Check, Circle, Clear, Flag, FlagCircle, SportsScoreOutlined, SportsScoreRounded} from "@mui/icons-material";
 import {CountdownCircleTimer} from 'react-countdown-circle-timer'
 import {Checkbox, FormControlLabel} from "@mui/material";
 import WaypointSound from "./../resources/audio/waypoint.wav";
@@ -34,6 +33,7 @@ export class Race extends React.Component {
 
         const remainingSec = (new Date(this.race["start_time"]) - new Date()) / 1000;
         this.state = {
+            racer_color: {},
             ready: false,
             racers_pos: [],
             displayCounter: true,
@@ -52,8 +52,8 @@ export class Race extends React.Component {
         console.log("Started Location watch");
         const watchOptions = {
             timeout: 10000,
-            maxAge: 50, //ms
-            enableHighAccuracy: true
+            maxAge: 0, //ms
+            enableHighAccuracy: false
         };
         if (navigator.geolocation)
             this.watchId = navigator.geolocation.watchPosition(this.update, this.handleError, watchOptions);
@@ -70,10 +70,25 @@ export class Race extends React.Component {
 
         let markers = [];
 
+
         racers.forEach(racer => {
+            const racer_name = racer.name;
+            let racer_color_tmp = this.state.racer_color[racer_name];
+            if (racer_color_tmp == null) {
+                racer_color_tmp = this.randColor();
+                const n_dct = {}
+                n_dct[racer_name] = racer_color_tmp
+
+                this.setState({
+                        racer_color: {...this.state.racer_color, ...n_dct}
+                    }
+                )
+            }
+
+
             markers.push(<Marker longitude={racer.longitude} latitude={racer.latitude}>
                 {racer.user_id !== getCookie("user_id") ? <Circle sx={{fontSize: '1.5rem'}} style={{color: "red"}}/> :
-                    <Circle sx={{fontSize: '1rem'}} style={{color: this.randColor()}}/>}
+                    <Circle sx={{fontSize: '1rem'}} style={{color: racer_color_tmp}}/>}
                 <b style={{color: "darkred"}}>{racer.name}</b>
             </Marker>);
         });
@@ -84,10 +99,15 @@ export class Race extends React.Component {
         let markers = [];
 
         route_waypoints.forEach(waypoint => {
-            if (waypoint.step >= this.step)
+            if (waypoint.step >= this.step) {
+                let marker = <Circle sx={{fontSize: '1.5rem'}} style={{color: "rgb(255,255,50,0.7)"}}/>;
+                if (parseInt(waypoint.step) === route_waypoints.length)
+                    marker = <SportsScoreRounded style={{color: "white"}}/>
+
                 markers.push(<Marker longitude={waypoint.longitude} latitude={waypoint.latitude}>
-                    <Circle sx={{fontSize: '1.5rem'}} style={{color: "yellow"}}/>
+                    {marker}
                 </Marker>);
+            }
         });
         return markers;
     }
@@ -137,9 +157,8 @@ export class Race extends React.Component {
         } else {
             this.props.drawWaypoints(null);
             this.props.setMapLocation(null);
-
             this.props.drawRoute(null);
-            this.props.mapUpdate(null);
+            this.props.mapUpdate([]);
             this.stopLocationWatch();
         }
     }
