@@ -81,23 +81,18 @@ const Sign_in = () => {
         {form_state}
         <div className={".text_group"}
              style={{width: "50%", background: "#33333399", borderRadius: "6px", marginBottom: "60px"}}>
-            <h3 style={{fontSize: 24}}>Vítejte na KanjoRacing, nejlepším místě pro milovníky pouličních závodů!</h3>
-            <p style={{fontSize: 16}}>Jsme tu, abychom ve vás zažehli vášeň pro vysokooktanovou, adrenalinovou akci na
-                asfaltu.
-                Ponořte se do vzrušujícího světa pouličních závodů a prozkoumejte nejnovější trendy, nejžhavější vozidla
-                a nejnapínavější závody z celého světa.
-                Připojte se k naší komunitě závodníků, kteří posouvají hranice automobilových výkonů.
-                Připoutejte se, pevně se držte a pojďte s KanjoRacing sešlápnout plyn na podlahu!</p>
+            <h3 style={{fontSize: 24}}>Welcome to KanjoRacing, the best place for street racing enthusiasts! </h3>
+            <p style={{fontSize: 16}}>We're here to ignite your passion for high-octane, adrenaline-pumping action on asphalt. 
+            Immerse yourself in the exciting world of street racing and explore the latest trends, hottest vehicles and most thrilling races from around the world.
+             Join our community of racers who are pushing the boundaries of automotive performance. Buckle up, hold on tight and put the pedal to the metal with KanjoRacing!</p>
             <p style={{fontSize: 14}}>
-                <h5 style={{fontSize: 20}}>Jsem tu poprvé</h5>
-                <h5 style={{fontSize: 16}}>Zaregistrujte se</h5>
-                Vložte svou přezdívku, e-mail a heslo. Zaregistrujte se a nyní se můžete přihlásit.
-                <h5 style={{fontSize: 16}}>Přidejte si svoje auto</h5>
-                Pod záložkou garáž můžete vložit své auto nebo motorku. Zadat lze přezdívku, typ, značku i výkon
-                vozidla. Snadno pak můžete najít vyzyvatele v podobné skupině.
-                <h5 style={{fontSize: 16}}>Závoďte</h5>
-                Teď už přišel čas roztočit kola. Můžete najít závody ve vašem okolí nebo vytvořit svůj vlastní
-                závod. Za každou výhru dostáváte karmu (body).
+                <h5 style={{fontSize: 20}}>It's my first time here.</h5>
+                <h5 style={{fontSize: 16}}>1. Sign up</h5>
+                Enter your nickname, email and password. Register and log in.
+                <h5 style={{fontSize: 16}}>2. Add your car</h5>
+               Under the garage tab you can add your car or motorbike. You can enter a nickname, type, brand and performance of the vehicle. You can then easily find challengers in a similar group.
+                <h5 style={{fontSize: 16}}>3. Let's race</h5>
+                Now it's time to get the wheels turning. You can find races in your area or create your own race. You get karma (points) for each win.
             </p>
         </div>
     </header>);
