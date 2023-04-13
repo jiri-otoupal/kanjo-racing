@@ -15,7 +15,7 @@ export const handleSubmit = (e, callback, custom_data = {}) => {
     const form = $(e.target);
     const form_data_json = formDataToJson(form);
     const data_concat = Object.assign({}, form_data_json, custom_data)
-    console.log("Data: ", data_concat, form_data_json);
+    //console.log("Data: ", data_concat, form_data_json);
 
     $.ajax({
         type: "POST",

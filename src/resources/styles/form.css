@@ -1,3 +1,10 @@
+.text_group {
+    width: 50%;
+    display: flex;
+    align-self: center;
+    background: #00000056;
+}
+
 .form__group {
     width: 65%;
     display: flex;
@@ -8,7 +15,6 @@
 }
 
 .form__field {
-
     font-family: inherit;
     border: 0;
     border-bottom: 2px solid #f8f8f85d;
