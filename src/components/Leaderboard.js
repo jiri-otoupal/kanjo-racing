@@ -28,7 +28,7 @@ class Leaderboard extends React.Component {
 
 
         if (this.props.racers == null || this.props.waypoints == null) {
-            console.log("No racers to display");
+            //console.log("No racers to display");
             return;
         }
         this.getRaceDistance();
@@ -64,7 +64,7 @@ class Leaderboard extends React.Component {
 
             const user_distance = gps2m(start_lat, start_lng, this.end_lat, this.end_lng);
 
-            console.log("Distance", user_distance, this.race_distance);
+            //console.log("Distance", user_distance, this.race_distance);
             const percent = Math.round((user_distance / this.race_distance) * 100);
             const race_step = this.props.racers[i]["step"];
             rows.unshift({
@@ -78,7 +78,7 @@ class Leaderboard extends React.Component {
             rows[i]["id"] = i + 1;
             rows[i]["position"] = i + 1;
         }
-        console.log("Rows", rows);
+        //console.log("Rows", rows);
 
 
         return <DataGrid

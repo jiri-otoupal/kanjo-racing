@@ -49,11 +49,11 @@ export class Race extends React.Component {
     }
 
     startLocationWatch() {
-        console.log("Started Location watch");
+        //console.log("Started Location watch");
         const watchOptions = {
             timeout: 10000,
-            maxAge: 0, //ms
-            enableHighAccuracy: false
+            maxAge: 500, //ms
+            enableHighAccuracy: true
         };
         if (navigator.geolocation)
             this.watchId = navigator.geolocation.watchPosition(this.update, this.handleError, watchOptions);
@@ -124,7 +124,7 @@ export class Race extends React.Component {
                 race_id: this.race.race_id,
             });
         }
-        console.log("Ready", this.state.ready);
+        //console.log("Ready", this.state.ready);
 
     }
 
@@ -136,7 +136,7 @@ export class Race extends React.Component {
     }
 
     stopLocationWatch() {
-        console.log("Stopped Watch");
+        //console.log("Stopped Watch");
         navigator.geolocation.clearWatch(this.watchId);
     }
 
@@ -165,7 +165,7 @@ export class Race extends React.Component {
 
     callbackWaypoints(data) {
         this.waypoints = data["waypoints"];
-        console.log("Waypoints", this.waypoints);
+        //console.log("Waypoints", this.waypoints);
     }
 
 
@@ -213,7 +213,7 @@ export class Race extends React.Component {
                 longitude: racer["longitude"]
             })
 
-            console.log(racer["user_id"], browser_user_id);
+            //console.log(racer["user_id"], browser_user_id);
             if (racer["user_id"] === browser_user_id)
                 this.racer = racer;
         });
@@ -224,7 +224,7 @@ export class Race extends React.Component {
             else
                 return a[0] - b[0];
         })
-        console.log("Racers Leaderboard", tmp_racers);
+        //console.log("Racers Leaderboard", tmp_racers);
 
         this.setState({
             racers_pos: tmp_racers
@@ -289,7 +289,7 @@ export class Race extends React.Component {
             race: this.race
         });
         const readyBg = "rgb(0,0,0,0.8)";
-        console.log("Time", new Date(this.race["start_time"]));
+        //console.log("Time", new Date(this.race["start_time"]));
 
 
         return <div>

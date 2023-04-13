@@ -6,16 +6,6 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import {useState} from "react";
 import {pre_url} from "../config";
 import React from 'react';
-import FacebookLogin from 'react-facebook-login';
-
-const responseFacebook = (response) => {
-    document.getElementById("nickname").value = response["name"];
-    document.getElementById("password").value = "no pwd";
-    document.getElementById("access_token").value = response["accessToken"];
-    document.getElementById("email").value = response["email"];
-    document.getElementById("sign").click();
-}
-
 
 const Sign_in = () => {
     const [alerted, setAlerted] = useState(false);
@@ -38,17 +28,8 @@ const Sign_in = () => {
                              }}>
         <div className="loginBox">
             <div className="form__group field">
-
                 <Link to={"./Register"} className={"register-href form__label"}>Register</Link>
                 <ThemeProvider theme={darkTheme}>
-                    <FacebookLogin
-                        appId="1172903216896033"
-                        autoLoad={false}
-                        fields="name,email"
-                        onClick={null}
-                        callback={responseFacebook}
-                        cssClass="my-facebook-button-class"
-                    />
                     <LoadingButton id="sign" type={"submit"} loading={loadingState} color={"anger"} variant="contained"
                                    className={"form__group"}>Sign
                         In</LoadingButton>
@@ -98,6 +79,27 @@ const Sign_in = () => {
         <h1 className={"title dock-up"}>Kanjo Racing</h1>
         {alert}
         {form_state}
+        <div className={".text_group"}
+             style={{width: "50%", background: "#33333399", borderRadius: "6px", marginBottom: "60px"}}>
+            <h3 style={{fontSize: 24}}>Vítejte na KanjoRacing, nejlepším místě pro milovníky pouličních závodů!</h3>
+            <p style={{fontSize: 16}}>Jsme tu, abychom ve vás zažehli vášeň pro vysokooktanovou, adrenalinovou akci na
+                asfaltu.
+                Ponořte se do vzrušujícího světa pouličních závodů a prozkoumejte nejnovější trendy, nejžhavější vozidla
+                a nejnapínavější závody z celého světa.
+                Připojte se k naší komunitě závodníků, kteří posouvají hranice automobilových výkonů.
+                Připoutejte se, pevně se držte a pojďte s KanjoRacing sešlápnout plyn na podlahu!</p>
+            <p style={{fontSize: 14}}>
+                <h5 style={{fontSize: 20}}>Jsem tu poprvé</h5>
+                <h5 style={{fontSize: 16}}>Zaregistrujte se</h5>
+                Vložte svou přezdívku, e-mail a heslo. Zaregistrujte se a nyní se můžete přihlásit.
+                <h5 style={{fontSize: 16}}>Přidejte si svoje auto</h5>
+                Pod záložkou garáž můžete vložit své auto nebo motorku. Zadat lze přezdívku, typ, značku i výkon
+                vozidla. Snadno pak můžete najít vyzyvatele v podobné skupině.
+                <h5 style={{fontSize: 16}}>Závoďte</h5>
+                Teď už přišel čas roztočit kola. Můžete najít závody ve vašem okolí nebo vytvořit svůj vlastní
+                závod. Za každou výhru dostáváte karmu (body).
+            </p>
+        </div>
     </header>);
 }
 
